@@ -1,31 +1,39 @@
 export interface DashboardSummary {
   total_income: string;
   total_expenses: string;
-  total_purchases: string;
-  gross_margin: string;
-  gross_margin_pct: string;
+  net_profit: string;
+  vat_supported: string;
+  vat_charged: string;
+  vat_balance: string;
+  retention_sales: string;
+  retention_rent: string;
   average_ticket: string;
   documents_processed: number;
   pending_reviews: number;
 }
 
-export interface MonthlyProfitabilityRow {
+export interface MonthlyFlowRow {
   month: string;
-  sales_net: string;
-  sales_gross: string;
-  purchases_net: string;
-  purchases_gross: string;
-  gross_margin_amount: string;
-  gross_margin_pct: string;
-  purchase_to_sales_ratio_pct: string;
+  income: string;
+  expenses: string;
+  profit: string;
 }
 
-export interface SupplierMetric {
-  provider_name: string;
-  total_amount: string;
+export interface ThirdPartyMetric {
+  name: string;
+  amount: string;
 }
 
 export interface CategoryMetric {
   category_name: string;
   total_amount: string;
+}
+
+export interface TaxMonthlyFlowRow {
+  month: string;
+  vat_charged: string;
+  vat_supported: string;
+  vat_balance: string;
+  retention_sales: string;
+  retention_rent: string;
 }

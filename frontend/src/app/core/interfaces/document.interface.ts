@@ -12,6 +12,7 @@ export interface DocumentItem {
   document_type: string | null;
   confidence_score: number | null;
   error_message: string | null;
+  movements_count: number;
   created_at: string;
   updated_at: string;
 }

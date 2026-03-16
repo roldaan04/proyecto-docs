@@ -6,9 +6,11 @@ from app.core.dependencies import get_current_tenant
 from app.models.tenant import Tenant
 from app.schemas.analytics import (
     AnalyticsOverviewResponse,
-    MonthlyProfitabilityRow,
-    ProviderMetricRow,
     CategoryMetricRow,
+    MonthlyFlowRow,
+    ProviderMetricRow,
+    TaxMonthlyFlowRow,
+    TopThirdPartyRow,
 )
 from app.services.analytics_service import AnalyticsService
 
@@ -23,15 +25,24 @@ def get_analytics_overview(
     return AnalyticsService.get_overview(db, current_tenant.id)
 
 
-@router.get("/monthly-profitability", response_model=list[MonthlyProfitabilityRow])
-def get_monthly_profitability(
+@router.get("/monthly-flow", response_model=list[MonthlyFlowRow])
+def get_monthly_flow(
     current_tenant: Tenant = Depends(get_current_tenant),
     db: Session = Depends(get_db),
 ):
-    return AnalyticsService.get_monthly_profitability(db, current_tenant.id)
+    return AnalyticsService.get_monthly_flow(db, current_tenant.id)
 
 
-@router.get("/top-suppliers", response_model=list[ProviderMetricRow])
+@router.get("/top-customers", response_model=list[TopThirdPartyRow])
+def get_top_customers(
+    limit: int = Query(default=5, ge=1, le=20),
+    current_tenant: Tenant = Depends(get_current_tenant),
+    db: Session = Depends(get_db),
+):
+    return AnalyticsService.get_top_customers(db, current_tenant.id, limit)
+
+
+@router.get("/top-suppliers", response_model=list[TopThirdPartyRow])
 def get_top_suppliers(
     limit: int = Query(default=5, ge=1, le=20),
     current_tenant: Tenant = Depends(get_current_tenant),
@@ -47,3 +58,20 @@ def get_expenses_by_category(
     db: Session = Depends(get_db),
 ):
     return AnalyticsService.get_expenses_by_category(db, current_tenant.id, limit)
+
+
+@router.get("/income-by-category", response_model=list[CategoryMetricRow])
+def get_income_by_category(
+    limit: int = Query(default=6, ge=1, le=20),
+    current_tenant: Tenant = Depends(get_current_tenant),
+    db: Session = Depends(get_db),
+):
+    return AnalyticsService.get_income_by_category(db, current_tenant.id, limit)
+
+
+@router.get("/tax-monthly-flow", response_model=list[TaxMonthlyFlowRow])
+def get_tax_monthly_flow(
+    current_tenant: Tenant = Depends(get_current_tenant),
+    db: Session = Depends(get_db),
+):
+    return AnalyticsService.get_tax_monthly_flow(db, current_tenant.id)

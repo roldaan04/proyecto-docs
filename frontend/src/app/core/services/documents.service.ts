@@ -49,4 +49,8 @@ export class DocumentsService {
       responseType: 'blob'
     });
   }
+
+  getAnalyzeExcel(documentId: string): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/${documentId}/preview`);
+  }
 }

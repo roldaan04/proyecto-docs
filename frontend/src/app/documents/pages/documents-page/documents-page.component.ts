@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 
 import { DocumentsService } from '../../../core/services/documents.service';
+import { JobsService } from '../../../core/services/jobs.service';
 import { DocumentItem } from '../../../core/interfaces/document.interface';
 import { ToastService } from '../../../core/services/toast.service';
 
@@ -15,6 +16,7 @@ import { ToastService } from '../../../core/services/toast.service';
 })
 export class DocumentsPageComponent {
   private readonly documentsService = inject(DocumentsService);
+  private readonly jobsService = inject(JobsService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
 
@@ -25,6 +27,9 @@ export class DocumentsPageComponent {
   readonly uploadError = signal<string | null>(null);
   readonly selectedFile = signal<File | null>(null);
   readonly search = signal('');
+  readonly analyzing = signal<string | null>(null);
+  readonly previewData = signal<any | null>(null);
+  readonly importing = signal<string | null>(null);
 
   readonly filteredDocuments = computed(() => {
     const term = this.search().trim().toLowerCase();
@@ -106,6 +111,63 @@ export class DocumentsPageComponent {
 
   setSearch(value: string): void {
     this.search.set(value);
+  }
+
+  analyzeDocument(docId: string): void {
+    this.analyzing.set(docId);
+    this.previewData.set(null);
+
+    this.documentsService
+      .getAnalyzeExcel(docId)
+      .pipe(finalize(() => this.analyzing.set(null)))
+      .subscribe({
+        next: (data) => {
+          if (data.error) {
+            this.toast.show(data.error, 'error');
+          } else {
+            this.previewData.set({ ...data, document_id: docId });
+          }
+        },
+        error: (err) => {
+          this.toast.show(err?.error?.detail || 'No se pudo analizar el documento.', 'error');
+        },
+      });
+  }
+
+  closePreview(): void {
+    this.previewData.set(null);
+  }
+
+  confirmAndImport(docId: string): void {
+    this.importing.set(docId);
+
+    this.documentsService.getJobs(docId).subscribe({
+      next: (jobs) => {
+        const pendingJob = jobs.find((j) => j.status === 'pending');
+        if (pendingJob) {
+          this.jobsService
+            .run(pendingJob.id)
+            .pipe(finalize(() => this.importing.set(null)))
+            .subscribe({
+              next: () => {
+                this.toast.show('Importación confirmada. El proceso ha comenzado.', 'success');
+                this.closePreview();
+                this.loadDocuments();
+              },
+              error: (err) => {
+                this.toast.show(err?.error?.detail || 'No se pudo iniciar la importación.', 'error');
+              },
+            });
+        } else {
+          this.toast.show('No hay tareas pendientes para este documento.', 'info');
+          this.importing.set(null);
+        }
+      },
+      error: (err) => {
+        this.toast.show('Error al recuperar las tareas del documento.', 'error');
+        this.importing.set(null);
+      },
+    });
   }
 
   getStatusClasses(status: string): string {

@@ -2,11 +2,13 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+import { environment } from '../../environments/environment';
 import {
   CategoryMetric,
   DashboardSummary,
-  MonthlyProfitabilityRow,
-  SupplierMetric,
+  MonthlyFlowRow,
+  TaxMonthlyFlowRow,
+  ThirdPartyMetric,
 } from '../interfaces/dashboard.interface';
 
 @Injectable({
@@ -14,21 +16,33 @@ import {
 })
 export class DashboardService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = 'http://127.0.0.1:8000/api/v1';
+  private readonly baseUrl = `${environment.apiUrl}/analytics`;
 
   getOverview(): Observable<DashboardSummary> {
-    return this.http.get<DashboardSummary>(`${this.baseUrl}/analytics/overview`);
+    return this.http.get<DashboardSummary>(`${this.baseUrl}/overview`);
   }
 
-  getMonthlyProfitability(): Observable<MonthlyProfitabilityRow[]> {
-    return this.http.get<MonthlyProfitabilityRow[]>(`${this.baseUrl}/analytics/monthly-profitability`);
+  getMonthlyFlow(): Observable<MonthlyFlowRow[]> {
+    return this.http.get<MonthlyFlowRow[]>(`${this.baseUrl}/monthly-flow`);
   }
 
-  getTopSuppliers(limit = 5): Observable<SupplierMetric[]> {
-    return this.http.get<SupplierMetric[]>(`${this.baseUrl}/analytics/top-suppliers?limit=${limit}`);
+  getTopCustomers(limit = 5): Observable<ThirdPartyMetric[]> {
+    return this.http.get<ThirdPartyMetric[]>(`${this.baseUrl}/top-customers?limit=${limit}`);
+  }
+
+  getTopSuppliers(limit = 5): Observable<ThirdPartyMetric[]> {
+    return this.http.get<ThirdPartyMetric[]>(`${this.baseUrl}/top-suppliers?limit=${limit}`);
   }
 
   getExpensesByCategory(limit = 6): Observable<CategoryMetric[]> {
-    return this.http.get<CategoryMetric[]>(`${this.baseUrl}/analytics/expenses-by-category?limit=${limit}`);
+    return this.http.get<CategoryMetric[]>(`${this.baseUrl}/expenses-by-category?limit=${limit}`);
+  }
+
+  getIncomeByCategory(limit = 6): Observable<CategoryMetric[]> {
+    return this.http.get<CategoryMetric[]>(`${this.baseUrl}/income-by-category?limit=${limit}`);
+  }
+
+  getTaxMonthlyFlow(): Observable<TaxMonthlyFlowRow[]> {
+    return this.http.get<TaxMonthlyFlowRow[]>(`${this.baseUrl}/tax-monthly-flow`);
   }
 }

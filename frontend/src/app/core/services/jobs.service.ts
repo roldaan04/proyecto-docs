@@ -9,7 +9,7 @@ export class JobsService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/jobs`;
 
-  runMock(jobId: string): Observable<JobItem> {
-    return this.http.post<JobItem>(`${this.baseUrl}/${jobId}/run-mock`, {});
+  run(jobId: string): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/${jobId}/run`, {});
   }
 }

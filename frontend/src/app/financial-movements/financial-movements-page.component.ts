@@ -1,4 +1,4 @@
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FinancialMovementService } from '../core/services/financial-movement.service';
@@ -8,7 +8,7 @@ import { FinancialMovement, FinancialMovementFilters } from '../core/interfaces/
 @Component({
   selector: 'app-financial-movements-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe],
+  imports: [CommonModule, FormsModule, DatePipe, DecimalPipe],
   templateUrl: './financial-movements-page.component.html',
 })
 export class FinancialMovementsPageComponent {
@@ -139,5 +139,31 @@ export class FinancialMovementsPageComponent {
       default:
         return source || '—';
     }
+  }
+
+  markAsReviewed(movement: FinancialMovement): void {
+    this.financialMovementService.updateFinancialMovement(movement.id, { needs_review: false }).subscribe({
+      next: (updated) => {
+        this.movements.update((list) =>
+          list.map((m) => (m.id === updated.id ? updated : m))
+        );
+      },
+      error: () => {
+        this.error.set('No se pudo marcar el movimiento como revisado.');
+      },
+    });
+  }
+
+  deleteMovement(id: string): void {
+    if (!confirm('¿Estás seguro de que deseas archivar este movimiento?')) return;
+
+    this.financialMovementService.updateFinancialMovement(id, { status: 'archived' }).subscribe({
+      next: () => {
+        this.movements.update((list) => list.filter((m) => m.id !== id));
+      },
+      error: () => {
+        this.error.set('No se pudo archivar el movimiento.');
+      },
+    });
   }
 }

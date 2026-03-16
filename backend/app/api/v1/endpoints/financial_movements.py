@@ -1,4 +1,5 @@
 import uuid
+from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -35,6 +36,10 @@ def list_financial_movements(
     source_type: str | None = Query(default=None),
     category: str | None = Query(default=None),
     third_party_name: str | None = Query(default=None),
+    business_area: str | None = Query(default=None),
+    needs_review: bool | None = Query(default=None),
+    date_from: date | None = Query(default=None),
+    date_to: date | None = Query(default=None),
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=500),
     db: Session = Depends(get_db),
@@ -49,6 +54,10 @@ def list_financial_movements(
         source_type=source_type,
         category=category,
         third_party_name=third_party_name,
+        business_area=business_area,
+        needs_review=needs_review,
+        date_from=date_from,
+        date_to=date_to,
         skip=skip,
         limit=limit,
     )

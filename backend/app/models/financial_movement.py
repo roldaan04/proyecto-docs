@@ -86,6 +86,9 @@ class FinancialMovement(Base):
 
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    fingerprint: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    source_data: Mapped[dict | None] = mapped_column(Text, nullable=True) # Storing as text or JSON if possible
+
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,

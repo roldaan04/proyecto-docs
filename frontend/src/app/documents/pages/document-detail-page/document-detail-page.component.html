@@ -93,6 +93,18 @@
             <p class="text-sm text-[var(--dark-gray-color)]">Subido el</p>
             <p class="mt-1 font-medium">{{ doc.created_at | date:'dd/MM/yyyy HH:mm' }}</p>
           </div>
+
+          @if (doc.movements_count > 0) {
+            <div class="col-span-full mt-2 rounded-xl bg-blue-50 p-4 border border-blue-100 flex items-center gap-3">
+              <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M10 13h4"/><path d="M10 17h4"/><path d="M10 9h1"/></svg>
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-blue-900">Movimientos generados</p>
+                <p class="text-xs text-blue-700">Este documento ha generado <strong>{{ doc.movements_count }}</strong> movimientos financieros en el sistema.</p>
+              </div>
+            </div>
+          }
         </div>
 
         @if (doc.error_message) {
@@ -166,7 +178,7 @@
                       type="button"
                       class="w-full rounded-xl bg-[var(--primary-color)] px-4 py-3 text-sm font-medium text-[var(--text-opposite-color)] hover:opacity-90 disabled:opacity-60 xl:w-auto"
                       [disabled]="runLoadingId() === job.id || job.status === 'running'"
-                      (click)="runMockJob(job.id)"
+                      (click)="runProcessingJob(job.id)"
                     >
                       {{ runLoadingId() === job.id ? 'Procesando...' : 'Procesar documento' }}
                     </button>

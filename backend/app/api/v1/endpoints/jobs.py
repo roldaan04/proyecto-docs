@@ -12,8 +12,8 @@ from app.services.job_service import JobService
 router = APIRouter(prefix="/jobs", tags=["Jobs"])
 
 
-@router.post("/{job_id}/run-mock")
-def run_job_mock(
+@router.post("/{job_id}/run")
+def run_job(
     job_id: UUID,
     current_tenant: Tenant = Depends(get_current_tenant),
     db: Session = Depends(get_db),
@@ -27,7 +27,7 @@ def run_job_mock(
     if job is None:
         raise HTTPException(status_code=404, detail="Job no encontrado")
 
-    job = JobService.run_mock_job(db, job)
+    job = JobService.run_processing_job(db, job)
 
     return {
         "message": "Job ejecutado correctamente",

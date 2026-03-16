@@ -32,8 +32,9 @@ class FinancialMovementBase(BaseModel):
     currency: str = "EUR"
 
     document_type: str | None = None
-    confidence_score: Decimal | None = None
     needs_review: bool = True
+    fingerprint: str | None = None
+    source_data: dict | str | None = None
 
     notes: str | None = None
 

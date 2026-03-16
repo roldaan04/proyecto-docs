@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, DecimalPipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FinancialMovementService } from '../core/services/financial-movement.service';
@@ -8,7 +8,7 @@ import { ManualMovementCreateRequest } from '../core/interfaces/manual-movement.
 @Component({
   selector: 'app-manual-movements-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DecimalPipe],
   templateUrl: './manual-movements-page.component.html',
 })
 export class ManualMovementsPageComponent {

@@ -38,6 +38,10 @@ export class FinancialMovementService {
   getFinancialMovementById(id: string): Observable<FinancialMovement> {
     return this.http.get<FinancialMovement>(`${this.baseUrl}/financial-movements/${id}`);
   }
+  
+  updateFinancialMovement(id: string, payload: Partial<FinancialMovement>): Observable<FinancialMovement> {
+    return this.http.patch<FinancialMovement>(`${this.baseUrl}/financial-movements/${id}`, payload);
+  }
 
   createManualMovement(payload: ManualMovementCreateRequest): Observable<FinancialMovement> {
     return this.http.post<FinancialMovement>(`${this.baseUrl}/manual-movements`, payload);

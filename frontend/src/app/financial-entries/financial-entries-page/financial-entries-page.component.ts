@@ -1,4 +1,4 @@
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
@@ -9,7 +9,7 @@ import { ToastService } from '../../core/services/toast.service';
 @Component({
   selector: 'app-financial-entries-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DatePipe],
+  imports: [CommonModule, ReactiveFormsModule, DatePipe, DecimalPipe],
   templateUrl: './financial-entries-page.component.html',
 })
 export class FinancialEntriesPageComponent {
@@ -196,5 +196,29 @@ export class FinancialEntriesPageComponent {
       default:
         return kind || '-';
     }
+  }
+
+  quickApprove(entry: FinancialEntryItem): void {
+    const payload: FinancialEntryReviewRequest = {
+      status_review: 'approved',
+      supplier_or_customer: entry.supplier_or_customer,
+      issue_date: entry.issue_date,
+      tax_base: entry.tax_base,
+      tax_amount: entry.tax_amount,
+      total_amount: entry.total_amount,
+      category: entry.category,
+    };
+
+    this.service.review(entry.id, payload).subscribe({
+      next: (updated) => {
+        this.entries.update((list) =>
+          list.map((item) => (item.id === updated.id ? updated : item))
+        );
+        this.toast.show('Registro aprobado correctamente.', 'success');
+      },
+      error: (err) => {
+        this.toast.show(err?.error?.detail || 'No se pudo aprobar el registro.', 'error');
+      },
+    });
   }
 }

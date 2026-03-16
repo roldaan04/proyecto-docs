@@ -109,13 +109,23 @@
                   <td class="px-3 py-4 whitespace-nowrap">{{ doc.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
 
                   <td class="px-3 py-4 text-right">
-                    <button
-                      type="button"
-                      class="rounded-lg border border-[var(--border-color)] px-3 py-2 text-sm hover:bg-[var(--muted-hover-color)]"
-                      (click)="goToDetail(doc.id)"
-                    >
-                      Ver detalle
-                    </button>
+                    <div class="flex items-center justify-end gap-2">
+                       <button
+                        type="button"
+                        class="rounded-lg border border-[var(--border-color)] px-3 py-2 text-sm hover:bg-[var(--muted-hover-color)] disabled:opacity-50"
+                        [disabled]="analyzing() === doc.id"
+                        (click)="analyzeDocument(doc.id)"
+                      >
+                        {{ analyzing() === doc.id ? 'Analizando...' : 'Previsualizar' }}
+                      </button>
+                      <button
+                        type="button"
+                        class="rounded-lg border border-[var(--border-color)] px-3 py-2 text-sm hover:bg-[var(--muted-hover-color)]"
+                        (click)="goToDetail(doc.id)"
+                      >
+                        Ver detalle
+                      </button>
+                    </div>
                   </td>
                 </tr>
               }
@@ -126,3 +136,92 @@
     </div>
   </div>
 </div>
+
+<!-- Preview Modal Overlay -->
+@if (previewData(); as data) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+    <div class="w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-3xl border border-white/20 bg-white/80 shadow-2xl backdrop-blur-md flex flex-col">
+      <div class="flex items-center justify-between border-b border-[var(--border-color)] p-5 sm:p-6">
+        <div>
+          <h2 class="text-xl font-semibold">Previsualización del Archivo</h2>
+          <p class="text-sm text-[var(--dark-gray-color)]">Revisa cómo el sistema ha entendido el Excel antes de importar</p>
+        </div>
+        <button (click)="closePreview()" class="rounded-full p-2 hover:bg-black/5">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-5 sm:p-6">
+        @for (sheet of data.sheets; track sheet.name) {
+          <div class="mb-8 last:mb-0">
+            <div class="flex items-center gap-3 mb-4">
+              <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--primary-color)] text-[var(--text-opposite-color)] font-bold">
+                {{ sheet.name[0] }}
+              </span>
+              <div>
+                <h4 class="font-bold text-lg">Hoja: {{ sheet.name }}</h4>
+                <div class="flex gap-2 mt-1">
+                  <span class="text-xs px-2 py-0.5 rounded-full border border-[var(--border-color)] bg-white/50">
+                    Tipo detectado: <strong>{{ sheet.kind === 'income' ? 'Ingresos' : 'Gastos' }}</strong>
+                  </span>
+                  <span class="text-xs px-2 py-0.5 rounded-full border border-[var(--border-color)] bg-white/50">
+                    Filas de datos: <strong>{{ sheet.total_rows_detected }}</strong>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-blue-50/50 rounded-xl p-4 border border-blue-100 mb-4">
+              <p class="text-sm font-medium text-blue-800 mb-2">Columnas identificadas:</p>
+              <div class="flex flex-wrap gap-2">
+                @for (col of sheet.columns_detected; track col) {
+                  <span class="text-xs px-2 py-1 bg-white rounded-md border border-blue-200 shadow-sm">
+                    {{ col }}
+                  </span>
+                }
+              </div>
+            </div>
+
+            <h5 class="text-sm font-semibold mb-2">Muestra de datos:</h5>
+            <div class="overflow-x-auto rounded-xl border border-[var(--border-color)]">
+              <table class="w-full text-xs">
+                <thead class="bg-gray-50/50">
+                  <tr>
+                    @for (key of sheet.columns_detected; track key) {
+                      <th class="px-3 py-2 border-b border-[var(--border-color)] text-[var(--dark-gray-color)] capitalize font-semibold">{{ key.replace('_', ' ') }}</th>
+                    }
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of sheet.sample; track $index) {
+                    <tr class="hover:bg-black/5 border-b border-[var(--border-color)] last:border-0">
+                       @for (key of sheet.columns_detected; track key) {
+                        <td class="px-3 py-2 truncate max-w-[150px]">{{ row[key] || '-' }}</td>
+                      }
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="border-t border-[var(--border-color)] p-5 sm:p-6 bg-gray-50/50 flex flex-col sm:flex-row gap-3 justify-end">
+        <button
+          (click)="closePreview()"
+          class="px-5 py-2.5 rounded-xl border border-[var(--border-color)] text-sm font-medium hover:bg-white"
+        >
+          Cancelar
+        </button>
+        <button
+          (click)="confirmAndImport(data.document_id)"
+          [disabled]="importing() === data.document_id"
+          class="px-5 py-2.5 rounded-xl bg-[var(--primary-color)] text-[var(--text-opposite-color)] text-sm font-medium hover:opacity-90 shadow-lg shadow-[var(--primary-color)]/20 disabled:opacity-50"
+        >
+          {{ importing() === data.document_id ? 'Importando...' : 'Confirmar e Importar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

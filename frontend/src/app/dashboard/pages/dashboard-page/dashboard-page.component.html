@@ -1,299 +1,254 @@
-<div class="space-y-5 sm:space-y-6">
-  <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-5 shadow-sm sm:p-6">
-    <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+<div class="space-y-6 sm:space-y-8 animate-in fade-in duration-700">
+  <!-- Header with Gradient Accent -->
+  <div class="relative overflow-hidden rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-6 shadow-sm sm:p-8">
+    <div class="absolute right-0 top-0 -mr-16 -mt-16 h-64 w-64 rounded-full bg-emerald-50 opacity-50 blur-3xl"></div>
+    <div class="absolute bottom-0 left-0 -ml-16 -mb-16 h-64 w-64 rounded-full bg-blue-50 opacity-50 blur-3xl"></div>
+    
+    <div class="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
       <div>
-        <p class="text-xs font-medium uppercase tracking-[0.18em] text-[var(--dark-gray-color)]">
-          Control financiero
+        <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">
+          Inteligencia de Negocio
         </p>
-        <h1 class="mt-2 text-2xl font-semibold sm:text-3xl">Dashboard financiero</h1>
-        <p class="mt-2 max-w-3xl text-sm sm:text-base text-[var(--dark-gray-color)]">
-          Visión global del negocio a partir de movimientos financieros, documentos y cargas manuales.
+        <h1 class="mt-2 text-3xl font-bold tracking-tight sm:text-4xl text-slate-900">Panel Gestión Anual</h1>
+        <p class="mt-2 max-w-2xl text-sm sm:text-base text-slate-500">
+          Control financiero total: Consolidation de ingresos, gastos, impuestos y análisis de terceros.
         </p>
       </div>
 
-      @if (!loading() && !error() && summary()) {
-        <div
-          class="rounded-2xl px-4 py-3 text-sm font-medium"
-          [class.bg-red-50]="hasNegativeMargin()"
-          [class.text-red-700]="hasNegativeMargin()"
-          [class.bg-emerald-50]="hasPositiveMargin()"
-          [class.text-emerald-700]="hasPositiveMargin()"
-          [class.bg-slate-100]="!hasNegativeMargin() && !hasPositiveMargin()"
-          [class.text-slate-700]="!hasNegativeMargin() && !hasPositiveMargin()"
-        >
-          {{ quickHeadline() }}
-        </div>
-      }
+      <!-- Tab Navigation -->
+      <nav class="flex flex-wrap gap-2 rounded-2xl bg-slate-100 p-1.5 shadow-inner">
+        <button (click)="setTab('overview')"
+          class="flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all"
+          [class.bg-white]="activeTab() === 'overview'"
+          [class.shadow-sm]="activeTab() === 'overview'"
+          [class.text-blue-600]="activeTab() === 'overview'"
+          [class.text-slate-500]="activeTab() !== 'overview'">
+          Resumen
+        </button>
+        <button (click)="setTab('income')"
+          class="flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all"
+          [class.bg-white]="activeTab() === 'income'"
+          [class.shadow-sm]="activeTab() === 'income'"
+          [class.text-emerald-600]="activeTab() === 'income'"
+          [class.text-slate-500]="activeTab() !== 'income'">
+          Ventas
+        </button>
+        <button (click)="setTab('expenses')"
+          class="flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all"
+          [class.bg-white]="activeTab() === 'expenses'"
+          [class.shadow-sm]="activeTab() === 'expenses'"
+          [class.text-rose-600]="activeTab() === 'expenses'"
+          [class.text-slate-500]="activeTab() !== 'expenses'">
+          Gastos
+        </button>
+        <button (click)="setTab('taxes')"
+          class="flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all"
+          [class.bg-white]="activeTab() === 'taxes'"
+          [class.shadow-sm]="activeTab() === 'taxes'"
+          [class.text-amber-600]="activeTab() === 'taxes'"
+          [class.text-slate-500]="activeTab() !== 'taxes'">
+          Fiscalidad
+        </button>
+        <button (click)="setTab('third-parties')"
+          class="flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all"
+          [class.bg-white]="activeTab() === 'third-parties'"
+          [class.shadow-sm]="activeTab() === 'third-parties'"
+          [class.text-indigo-600]="activeTab() === 'third-parties'"
+          [class.text-slate-500]="activeTab() !== 'third-parties'">
+          Terceros
+        </button>
+      </nav>
     </div>
   </div>
 
   @if (loading()) {
-    <div class="rounded-2xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] px-4 py-6 text-sm text-[var(--dark-gray-color)] sm:px-5">
-      Cargando dashboard...
+    <div class="flex h-64 items-center justify-center rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] shadow-sm">
+      <div class="flex flex-col items-center gap-3">
+        <div class="h-8 w-8 animate-spin rounded-full border-4 border-blue-100 border-t-blue-600"></div>
+        <p class="text-sm font-medium text-slate-400">Analizando datos financieros...</p>
+      </div>
     </div>
   } @else if (error()) {
-    <div class="rounded-xl border border-[var(--error-color)] bg-red-50 px-4 py-3 text-sm text-[var(--error-color)]">
-      {{ error() }}
+    <div class="rounded-2xl border border-red-200 bg-red-50 p-6 text-center shadow-sm">
+      <p class="font-semibold text-red-800">{{ error() }}</p>
+      <button (click)="loadDashboard()" class="mt-4 rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">
+        Reintentar carga
+      </button>
     </div>
   } @else if (summary(); as data) {
-    <!-- KPIs -->
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
-      <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-5 shadow-sm">
-        <p class="text-sm text-[var(--dark-gray-color)]">Ingresos totales</p>
-        <p class="mt-3 text-3xl font-semibold text-emerald-600">
-          {{ toNumber(data.total_income) | number:'1.2-2' }} €
-        </p>
-      </div>
-
-      <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-5 shadow-sm">
-        <p class="text-sm text-[var(--dark-gray-color)]">Gastos totales</p>
-        <p class="mt-3 text-3xl font-semibold text-red-600">
-          {{ toNumber(data.total_expenses) | number:'1.2-2' }} €
-        </p>
-      </div>
-
-      <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-5 shadow-sm">
-        <p class="text-sm text-[var(--dark-gray-color)]">Compras totales</p>
-        <p class="mt-3 text-3xl font-semibold text-amber-600">
-          {{ toNumber(data.total_purchases) | number:'1.2-2' }} €
-        </p>
-      </div>
-
-      <div
-        class="rounded-3xl border p-5 shadow-sm"
-        [class.border-red-200]="hasNegativeMargin()"
-        [class.bg-red-50]="hasNegativeMargin()"
-        [class.border-emerald-200]="hasPositiveMargin()"
-        [class.bg-emerald-50]="hasPositiveMargin()"
-        [class.border-[var(--border-color)]]="!hasNegativeMargin() && !hasPositiveMargin()"
-        [class.bg-[var(--bright-bg-color)]]="!hasNegativeMargin() && !hasPositiveMargin()"
-      >
-        <p class="text-sm text-[var(--dark-gray-color)]">Margen bruto</p>
-        <p
-          class="mt-3 text-3xl font-semibold"
-          [class.text-red-600]="hasNegativeMargin()"
-          [class.text-emerald-600]="hasPositiveMargin()"
-        >
-          {{ toNumber(data.gross_margin) | number:'1.2-2' }} €
-        </p>
-      </div>
-
-      <div
-        class="rounded-3xl border p-5 shadow-sm"
-        [class.border-red-200]="toPercent(data.gross_margin_pct) < 0"
-        [class.bg-red-50]="toPercent(data.gross_margin_pct) < 0"
-        [class.border-emerald-200]="toPercent(data.gross_margin_pct) > 0"
-        [class.bg-emerald-50]="toPercent(data.gross_margin_pct) > 0"
-        [class.border-[var(--border-color)]]="toPercent(data.gross_margin_pct) === 0"
-        [class.bg-[var(--bright-bg-color)]]="toPercent(data.gross_margin_pct) === 0"
-      >
-        <p class="text-sm text-[var(--dark-gray-color)]">Rentabilidad</p>
-        <p
-          class="mt-3 text-3xl font-semibold"
-          [class.text-red-600]="toPercent(data.gross_margin_pct) < 0"
-          [class.text-emerald-600]="toPercent(data.gross_margin_pct) > 0"
-        >
-          {{ toPercent(data.gross_margin_pct) | number:'1.2-2' }} %
-        </p>
-      </div>
-
-      <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-5 shadow-sm">
-        <p class="text-sm text-[var(--dark-gray-color)]">Ticket medio</p>
-        <p class="mt-3 text-3xl font-semibold">
-          {{ toNumber(data.average_ticket) | number:'1.2-2' }} €
-        </p>
-      </div>
-    </div>
-
-    <!-- Contenido principal -->
-    <div class="grid grid-cols-1 gap-4 xl:grid-cols-3">
-      <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-5 shadow-sm xl:col-span-2">
-        <div class="mb-5">
-          <h2 class="text-lg font-semibold">Evolución mensual</h2>
-          <p class="text-sm text-[var(--dark-gray-color)]">
-            Comparativa de ventas, compras y margen por mes.
-          </p>
+    
+    <!-- TABS CONTENT -->
+    
+    <!-- 1. OVERVIEW TAB -->
+    @if (activeTab() === 'overview') {
+      <div class="animate-in slide-in-from-bottom-4 duration-500 space-y-6">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-6 shadow-sm">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Facturación Total</p>
+            <p class="mt-2 text-3xl font-black text-emerald-600">{{ toNumber(data.total_income) | number:'1.2-2' }} €</p>
+          </div>
+          <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-6 shadow-sm">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Gastos Totales</p>
+            <p class="mt-2 text-3xl font-black text-rose-600">{{ toNumber(data.total_expenses) | number:'1.2-2' }} €</p>
+          </div>
+          <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-6 shadow-sm"
+               [class.bg-emerald-50]="hasPositiveProfit()" [class.bg-rose-50]="hasNegativeProfit()">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Margen Neto</p>
+            <p class="mt-2 text-3xl font-black" [class.text-emerald-700]="hasPositiveProfit()" [class.text-rose-700]="hasNegativeProfit()">
+              {{ toNumber(data.net_profit) | number:'1.2-2' }} €
+            </p>
+          </div>
         </div>
 
-        @if (monthlyProfitability().length === 0) {
-          <div class="rounded-2xl bg-[var(--bg-gray-color)] px-4 py-6 text-sm text-[var(--dark-gray-color)]">
-            Aún no hay suficientes datos mensuales para mostrar evolución.
+        <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-8 shadow-sm">
+          <h3 class="text-lg font-bold text-slate-900 leading-none">Flujo de Caja Mensual</h3>
+          <p class="text-sm text-slate-500 mt-1 mb-8">Evolución de ingresos y gastos consolidados.</p>
+          
+          <div class="h-64 sm:h-80 w-full mt-4">
+            <app-chart
+              type="bar"
+              [data]="incomeVsExpenseChart()"
+              [options]="{ maintainAspectRatio: false }"
+            ></app-chart>
           </div>
-        } @else {
-          <div class="space-y-4">
-            @for (row of monthlyProfitability(); track row.month) {
-              <div class="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-gray-color)] p-4">
-                <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <p class="font-semibold">{{ monthLabel(row.month) }}</p>
-                  <div
-                    class="rounded-full px-3 py-1 text-xs font-medium"
-                    [class.bg-red-50]="toNumber(row.gross_margin_amount) < 0"
-                    [class.text-red-700]="toNumber(row.gross_margin_amount) < 0"
-                    [class.bg-emerald-50]="toNumber(row.gross_margin_amount) > 0"
-                    [class.text-emerald-700]="toNumber(row.gross_margin_amount) > 0"
-                    [class.bg-slate-100]="toNumber(row.gross_margin_amount) === 0"
-                    [class.text-slate-700]="toNumber(row.gross_margin_amount) === 0"
-                  >
-                    Margen: {{ toNumber(row.gross_margin_amount) | number:'1.2-2' }} €
-                  </div>
-                </div>
+        </div>
+      </div>
+    }
 
-                <div class="space-y-3">
-                  <div>
-                    <div class="mb-1 flex items-center justify-between text-xs">
-                      <span class="text-[var(--dark-gray-color)]">Ventas</span>
-                      <span>{{ toNumber(row.sales_gross) | number:'1.2-2' }} €</span>
-                    </div>
-                    <div class="h-3 rounded-full bg-white">
-                      <div
-                        class="h-3 rounded-full bg-emerald-500"
-                        [style.width]="barWidth(row.sales_gross, maxMonthlyValue())"
-                      ></div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div class="mb-1 flex items-center justify-between text-xs">
-                      <span class="text-[var(--dark-gray-color)]">Compras</span>
-                      <span>{{ toNumber(row.purchases_gross) | number:'1.2-2' }} €</span>
-                    </div>
-                    <div class="h-3 rounded-full bg-white">
-                      <div
-                        class="h-3 rounded-full bg-amber-500"
-                        [style.width]="barWidth(row.purchases_gross, maxMonthlyValue())"
-                      ></div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div class="mb-1 flex items-center justify-between text-xs">
-                      <span class="text-[var(--dark-gray-color)]">Margen</span>
-                      <span>{{ toNumber(row.gross_margin_amount) | number:'1.2-2' }} €</span>
-                    </div>
-                    <div class="h-3 rounded-full bg-white">
-                      <div
-                        class="h-3 rounded-full"
-                        [class.bg-red-500]="toNumber(row.gross_margin_amount) < 0"
-                        [class.bg-blue-500]="toNumber(row.gross_margin_amount) >= 0"
-                        [style.width]="barWidth(absNumber(row.gross_margin_amount), maxMonthlyValue())"
-                      ></div>
-                    </div>
-                  </div>
-                </div>
+    <!-- 2. INCOME TAB -->
+    @if (activeTab() === 'income') {
+      <div class="animate-in slide-in-from-bottom-4 duration-500 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-8 shadow-sm">
+          <h3 class="text-lg font-bold text-slate-900">Ventas por Categoría</h3>
+          <div class="h-64 sm:h-80 w-full">
+            <app-chart
+              type="doughnut"
+              [data]="categoryIncomesChart()"
+              [options]="{ 
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { position: 'right' }
+                }
+              }"
+            ></app-chart>
+          </div>
+        </div>
+        <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-8 shadow-sm">
+          <h3 class="text-lg font-bold text-slate-900">Top Clientes</h3>
+          <div class="mt-8 space-y-4">
+            @for (c of topCustomers(); track c.name; let i = $index) {
+              <div class="flex items-center gap-4 rounded-2xl border border-slate-50 p-4 transition-colors hover:bg-slate-50">
+                <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 font-bold text-xs">{{ i+1 }}</span>
+                <span class="flex-1 font-bold text-slate-700">{{ c.name }}</span>
+                <span class="font-black text-slate-900">{{ toNumber(c.amount) | number:'1.2-2' }} €</span>
               </div>
             }
           </div>
-        }
-      </div>
-
-      <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-5 shadow-sm">
-        <div class="mb-5">
-          <h2 class="text-lg font-semibold">Top proveedores</h2>
-          <p class="text-sm text-[var(--dark-gray-color)]">
-            Proveedores con mayor impacto acumulado.
-          </p>
         </div>
+      </div>
+    }
 
-        @if (topSuppliers().length === 0) {
-          <div class="rounded-2xl bg-[var(--bg-gray-color)] px-4 py-6 text-sm text-[var(--dark-gray-color)]">
-            Aún no hay proveedores suficientes para mostrar ranking.
+    <!-- 3. EXPENSES TAB -->
+    @if (activeTab() === 'expenses') {
+      <div class="animate-in slide-in-from-bottom-4 duration-500 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-8 shadow-sm">
+          <h3 class="text-lg font-bold text-slate-900">Gastos por Categoría</h3>
+          <div class="h-64 sm:h-80 w-full">
+            <app-chart
+              type="doughnut"
+              [data]="categoryExpensesChart()"
+              [options]="{ 
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { position: 'right' }
+                }
+              }"
+            ></app-chart>
           </div>
-        } @else {
-          <div class="space-y-3">
-            @for (item of topSuppliers(); track item.provider_name) {
-              <div class="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-gray-color)] p-4">
-                <div class="mb-2 flex items-center justify-between gap-3">
-                  <p class="text-sm font-medium">{{ item.provider_name }}</p>
-                  <p class="text-sm font-semibold">
-                    {{ toNumber(item.total_amount) | number:'1.2-2' }} €
-                  </p>
-                </div>
-
-                <div class="h-3 rounded-full bg-white">
-                  <div
-                    class="h-3 rounded-full bg-indigo-500"
-                    [style.width]="barWidth(item.total_amount, maxSupplierValue())"
-                  ></div>
-                </div>
+        </div>
+        <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-8 shadow-sm">
+          <h3 class="text-lg font-bold text-slate-900">Top Proveedores</h3>
+          <div class="mt-8 space-y-4">
+            @for (s of topSuppliers(); track s.name; let i = $index) {
+              <div class="flex items-center gap-4 rounded-2xl border border-slate-50 p-4 transition-colors hover:bg-slate-50">
+                <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 font-bold text-xs">{{ i+1 }}</span>
+                <span class="flex-1 font-bold text-slate-700">{{ s.name }}</span>
+                <span class="font-black text-slate-900">{{ toNumber(s.amount) | number:'1.2-2' }} €</span>
               </div>
             }
           </div>
-        }
-      </div>
-    </div>
-
-    <!-- Segunda fila -->
-    <div class="grid grid-cols-1 gap-4 xl:grid-cols-3">
-      <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-5 shadow-sm xl:col-span-2">
-        <div class="mb-5">
-          <h2 class="text-lg font-semibold">Gastos por categoría</h2>
-          <p class="text-sm text-[var(--dark-gray-color)]">
-            Distribución actual de compras y gastos agrupados.
-          </p>
-        </div>
-
-        @if (categoryExpenses().length === 0) {
-          <div class="rounded-2xl bg-[var(--bg-gray-color)] px-4 py-6 text-sm text-[var(--dark-gray-color)]">
-            No hay categorías disponibles todavía.
-          </div>
-        } @else {
-          <div class="space-y-3">
-            @for (item of categoryExpenses(); track item.category_name) {
-              <div class="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-gray-color)] p-4">
-                <div class="mb-2 flex items-center justify-between gap-3">
-                  <p class="text-sm font-medium">{{ item.category_name }}</p>
-                  <p class="text-sm font-semibold">
-                    {{ toNumber(item.total_amount) | number:'1.2-2' }} €
-                  </p>
-                </div>
-
-                <div class="h-3 rounded-full bg-white">
-                  <div
-                    class="h-3 rounded-full bg-rose-500"
-                    [style.width]="barWidth(item.total_amount, maxCategoryValue())"
-                  ></div>
-                </div>
-              </div>
-            }
-          </div>
-        }
-      </div>
-
-      <div class="space-y-4">
-        <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-5 shadow-sm">
-          <div class="flex items-start justify-between gap-4">
-            <div>
-              <p class="text-sm text-[var(--dark-gray-color)]">Documentos procesados</p>
-              <p class="mt-3 text-3xl font-semibold">{{ data.documents_processed }}</p>
-            </div>
-            <div class="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
-              Pipeline documental
-            </div>
-          </div>
-
-          <p class="mt-4 text-sm text-[var(--dark-gray-color)]">
-            Número total de registros financieros procesados por el sistema.
-          </p>
-        </div>
-
-        <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-5 shadow-sm">
-          <div class="flex items-start justify-between gap-4">
-            <div>
-              <p class="text-sm text-[var(--dark-gray-color)]">Pendientes de revisión</p>
-              <p class="mt-3 text-3xl font-semibold" [class.text-amber-600]="data.pending_reviews > 0">
-                {{ data.pending_reviews }}
-              </p>
-            </div>
-            <div class="rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
-              Validación
-            </div>
-          </div>
-
-          <p class="mt-4 text-sm text-[var(--dark-gray-color)]">
-            Movimientos o entradas que siguen necesitando validación manual.
-          </p>
         </div>
       </div>
-    </div>
+    }
+
+    <!-- 4. TAXES TAB -->
+    @if (activeTab() === 'taxes') {
+      <div class="animate-in slide-in-from-bottom-4 duration-500 space-y-6">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-6 shadow-sm">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Balance IVA</p>
+            <p class="mt-2 text-2xl font-black text-amber-600">{{ toNumber(data.vat_balance) | number:'1.2-2' }} €</p>
+          </div>
+          <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-6 shadow-sm">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">IRPF Ventas (M.111)</p>
+            <p class="mt-2 text-2xl font-black text-indigo-600">{{ toNumber(data.retention_sales) | number:'1.2-2' }} €</p>
+          </div>
+          <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-6 shadow-sm">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">IRPF Alquiler (M.115)</p>
+            <p class="mt-2 text-2xl font-black text-slate-800">{{ toNumber(data.retention_rent) | number:'1.2-2' }} €</p>
+          </div>
+        </div>
+
+        <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-8 shadow-sm">
+          <h3 class="text-lg font-bold text-slate-900">Evolución IVA Mensual</h3>
+          <div class="h-64 sm:h-80 w-full mt-4">
+            <app-chart
+              type="line"
+              [data]="taxFlowChart()"
+              [options]="{ maintainAspectRatio: false }"
+            ></app-chart>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- 5. THIRD PARTIES TAB -->
+    @if (activeTab() === 'third-parties') {
+      <div class="animate-in slide-in-from-bottom-4 duration-500 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <!-- Customers Table -->
+        <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] overflow-hidden shadow-sm">
+          <div class="p-6 border-b border-slate-50 bg-emerald-50/20">
+            <h2 class="text-lg font-bold text-slate-900 leading-none">Ranking de Clientes</h2>
+          </div>
+          <table class="w-full text-left text-sm">
+            <tbody class="divide-y divide-slate-50">
+              @for (item of topCustomers(); track item.name) {
+                <tr class="hover:bg-slate-50 transition-colors">
+                  <td class="px-6 py-4 font-bold text-slate-700">{{ item.name }}</td>
+                  <td class="px-6 py-4 text-right font-black text-slate-900">{{ toNumber(item.amount) | number:'1.2-2' }} €</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <!-- Suppliers Table -->
+        <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] overflow-hidden shadow-sm">
+          <div class="p-6 border-b border-slate-50 bg-rose-50/20">
+            <h2 class="text-lg font-bold text-slate-900 leading-none">Ranking de Proveedores</h2>
+          </div>
+          <table class="w-full text-left text-sm">
+            <tbody class="divide-y divide-slate-50">
+              @for (item of topSuppliers(); track item.name) {
+                <tr class="hover:bg-slate-50 transition-colors">
+                  <td class="px-6 py-4 font-bold text-slate-700">{{ item.name }}</td>
+                  <td class="px-6 py-4 text-right font-black text-slate-900">{{ toNumber(item.amount) | number:'1.2-2' }} €</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
   }
 </div>

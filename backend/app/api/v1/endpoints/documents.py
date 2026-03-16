@@ -125,6 +125,24 @@ def get_document_jobs(
     return jobs
 
 
+@router.get("/{document_id}/preview")
+def preview_document(
+    document_id: UUID,
+    current_tenant: Tenant = Depends(get_current_tenant),
+    db: Session = Depends(get_db)
+):
+    document = DocumentService.get_document_by_id(
+        db=db,
+        tenant_id=str(current_tenant.id),
+        document_id=str(document_id)
+    )
+
+    if document is None:
+        raise HTTPException(status_code=404, detail="Documento no encontrado")
+
+    return DocumentService.analyze_excel(document)
+
+
 @router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_document(
     document_id: UUID,

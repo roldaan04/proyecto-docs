@@ -1,4 +1,4 @@
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, inject, OnDestroy, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -14,7 +14,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 @Component({
   selector: 'app-document-detail-page',
   standalone: true,
-  imports: [CommonModule, DatePipe, RouterLink, PopupContainerComponent],
+  imports: [CommonModule, DatePipe, DecimalPipe, RouterLink, PopupContainerComponent],
   templateUrl: './document-detail-page.component.html',
 })
 export class DocumentDetailPageComponent implements OnDestroy {
@@ -108,11 +108,11 @@ export class DocumentDetailPageComponent implements OnDestroy {
       });
   }
 
-  runMockJob(jobId: string): void {
+  runProcessingJob(jobId: string): void {
     this.runLoadingId.set(jobId);
 
     this.jobsService
-      .runMock(jobId)
+      .run(jobId)
       .pipe(finalize(() => this.runLoadingId.set(null)))
       .subscribe({
         next: () => {

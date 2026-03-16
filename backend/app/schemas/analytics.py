@@ -5,23 +5,27 @@ from pydantic import BaseModel
 class AnalyticsOverviewResponse(BaseModel):
     total_income: Decimal
     total_expenses: Decimal
-    total_purchases: Decimal
-    gross_margin: Decimal
-    gross_margin_pct: Decimal
+    net_profit: Decimal
+    vat_supported: Decimal  # IVA Soportado (Expenses)
+    vat_charged: Decimal    # IVA Repercutido (Income)
+    vat_balance: Decimal    # charged - supported
+    retention_sales: Decimal # M.111 / Ventas
+    retention_rent: Decimal  # M.115 / Alquiler
     average_ticket: Decimal
     documents_processed: int
     pending_reviews: int
 
 
-class MonthlyProfitabilityRow(BaseModel):
+class MonthlyFlowRow(BaseModel):
     month: str
-    sales_net: Decimal
-    sales_gross: Decimal
-    purchases_net: Decimal
-    purchases_gross: Decimal
-    gross_margin_amount: Decimal
-    gross_margin_pct: Decimal
-    purchase_to_sales_ratio_pct: Decimal
+    income: Decimal
+    expenses: Decimal
+    profit: Decimal
+
+
+class TopThirdPartyRow(BaseModel):
+    name: str
+    amount: Decimal
 
 
 class CategoryMetricRow(BaseModel):
@@ -32,3 +36,12 @@ class CategoryMetricRow(BaseModel):
 class ProviderMetricRow(BaseModel):
     provider_name: str
     total_amount: Decimal
+
+
+class TaxMonthlyFlowRow(BaseModel):
+    month: str
+    vat_charged: Decimal
+    vat_supported: Decimal
+    vat_balance: Decimal
+    retention_sales: Decimal
+    retention_rent: Decimal
