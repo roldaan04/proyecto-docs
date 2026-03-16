@@ -34,12 +34,13 @@ class ExtractionService:
         }
 
         extraction.normalized_output_json = {
-            "document_type": "invoice",
-            "supplier_name": "ACME SL",
-            "invoice_number": "FAC-2026-001",
+            "document_type": "sales_invoice",
+            "customer_name": "Cliente Demo SL",
+            "invoice_number": "FV-2026-001",
             "issue_date": "2026-03-14",
             "total_amount": 159.95,
-            "vat_rate": 21
+            "vat_rate": 21,
+            "kind": "income"
         }
 
         extraction.confidence_score = 0.92

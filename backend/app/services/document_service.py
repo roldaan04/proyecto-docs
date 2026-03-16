@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.models.document import Document
 from app.models.tenant import Tenant
 from app.models.user import User
+from app.models.job import Job
 
 
 class DocumentService:
@@ -87,3 +88,21 @@ class DocumentService:
             )
             .first()
         )
+
+    @staticmethod
+    def delete_document(db: Session, document: Document) -> None:
+        # Borrar archivo físico si existe
+        if document.storage_key:
+            file_path = Path(document.storage_key)
+            if file_path.exists() and file_path.is_file():
+                try:
+                    file_path.unlink()
+                except OSError:
+                    raise ValueError("No se pudo eliminar el archivo del almacenamiento")
+
+        # Borrar jobs asociados si no tienes cascade ya configurado
+        db.query(Job).filter(Job.document_id == document.id).delete(synchronize_session=False)
+
+        # Borrar documento
+        db.delete(document)
+        db.commit()

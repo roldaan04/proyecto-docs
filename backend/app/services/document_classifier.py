@@ -1,0 +1,109 @@
+import unicodedata
+
+
+class DocumentClassifier:
+    INCOME_TYPES = {
+        "sales_invoice",
+        "issued_invoice",
+        "customer_invoice",
+        "sale",
+        "income",
+        "receipt_sale",
+        "venta",
+        "factura_emitida",
+        "factura_cliente",
+        "ingreso",
+    }
+
+    EXPENSE_TYPES = {
+        "invoice",
+        "supplier_invoice",
+        "purchase_invoice",
+        "expense",
+        "ticket",
+        "receipt",
+        "gasto",
+        "compra",
+        "factura_proveedor",
+        "factura_recibida",
+    }
+
+    INCOME_KEYWORDS = {
+        "factura emitida",
+        "factura cliente",
+        "cliente",
+        "customer",
+        "sale",
+        "venta",
+        "ingreso",
+        "invoice issued",
+    }
+
+    EXPENSE_KEYWORDS = {
+        "factura proveedor",
+        "factura recibida",
+        "supplier",
+        "proveedor",
+        "expense",
+        "gasto",
+        "compra",
+        "ticket",
+        "receipt",
+    }
+
+    @staticmethod
+    def _normalize(value: str | None) -> str:
+        if not value:
+            return ""
+        text = str(value).strip().lower()
+        text = unicodedata.normalize("NFKD", text)
+        text = "".join(ch for ch in text if not unicodedata.combining(ch))
+        return text
+
+    @classmethod
+    def classify(cls, normalized_data: dict | None, raw_data: dict | None = None) -> str:
+        normalized_data = normalized_data or {}
+        raw_data = raw_data or {}
+
+        explicit_kind = cls._normalize(normalized_data.get("kind"))
+        if explicit_kind in {"income", "expense"}:
+            return explicit_kind
+
+        document_type = cls._normalize(normalized_data.get("document_type"))
+        if document_type in cls.INCOME_TYPES:
+            return "income"
+        if document_type in cls.EXPENSE_TYPES:
+            return "expense"
+
+        # señales estructuradas
+        customer_name = cls._normalize(
+            normalized_data.get("customer_name") or normalized_data.get("client_name")
+        )
+        supplier_name = cls._normalize(normalized_data.get("supplier_name"))
+
+        if customer_name and not supplier_name:
+            return "income"
+        if supplier_name and not customer_name:
+            return "expense"
+
+        # señales por texto libre
+        searchable_parts = [
+            normalized_data.get("document_type"),
+            normalized_data.get("description"),
+            normalized_data.get("title"),
+            normalized_data.get("notes"),
+            raw_data.get("supplier"),
+            raw_data.get("customer"),
+            raw_data.get("title"),
+            raw_data.get("text"),
+        ]
+        searchable_text = " ".join(cls._normalize(v) for v in searchable_parts if v)
+
+        if any(keyword in searchable_text for keyword in cls.INCOME_KEYWORDS):
+            return "income"
+
+        if any(keyword in searchable_text for keyword in cls.EXPENSE_KEYWORDS):
+            return "expense"
+
+        # fallback conservador
+        return "expense"

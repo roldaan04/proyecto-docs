@@ -1,6 +1,7 @@
 from uuid import UUID
-
+from pathlib import Path
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -71,6 +72,34 @@ def get_document(
 
     return document
 
+@router.get("/{document_id}/file")
+def get_document_file(
+    document_id: UUID,
+    download: bool = False,
+    current_tenant: Tenant = Depends(get_current_tenant),
+    db: Session = Depends(get_db)
+):
+    document = DocumentService.get_document_by_id(
+        db=db,
+        tenant_id=str(current_tenant.id),
+        document_id=str(document_id)
+    )
+
+    if document is None:
+        raise HTTPException(status_code=404, detail="Documento no encontrado")
+
+    file_path = Path(document.storage_key)
+
+    if not file_path.exists() or not file_path.is_file():
+        raise HTTPException(status_code=404, detail="Archivo no encontrado en el almacenamiento")
+
+    return FileResponse(
+        path=file_path,
+        media_type=document.mime_type or "application/octet-stream",
+        filename=document.filename_original,
+        content_disposition_type="attachment" if download else "inline"
+    )
+
 
 @router.get("/{document_id}/jobs", response_model=list[JobResponse])
 def get_document_jobs(
@@ -94,3 +123,24 @@ def get_document_jobs(
     )
 
     return jobs
+
+
+@router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_document(
+    document_id: UUID,
+    current_tenant: Tenant = Depends(get_current_tenant),
+    db: Session = Depends(get_db)
+):
+    document = DocumentService.get_document_by_id(
+        db=db,
+        tenant_id=str(current_tenant.id),
+        document_id=str(document_id)
+    )
+
+    if document is None:
+        raise HTTPException(status_code=404, detail="Documento no encontrado")
+
+    try:
+        DocumentService.delete_document(db=db, document=document)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))

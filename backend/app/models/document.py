@@ -56,3 +56,4 @@ class Document(Base):
     jobs = relationship("Job", back_populates="document", cascade="all, delete-orphan")
     extraction_runs = relationship("ExtractionRun", back_populates="document", cascade="all, delete-orphan")
     financial_entries = relationship("FinancialEntry", back_populates="document", cascade="all, delete-orphan")
+    purchase_entries = relationship("PurchaseEntry", back_populates="source_document")

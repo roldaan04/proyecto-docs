@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 
 from app.models.extraction_run import ExtractionRun
 from app.models.financial_entry import FinancialEntry
+from app.services.document_classifier import DocumentClassifier
+from app.services.financial_movement_writer import FinancialMovementWriter
 
 
 class FinancialEntryService:
@@ -15,8 +17,19 @@ class FinancialEntryService:
         extraction: ExtractionRun
     ) -> FinancialEntry:
         data = extraction.normalized_output_json or {}
+        raw_data = extraction.raw_output_json or {}
 
-        supplier_name = data.get("supplier_name")
+        entry_kind = DocumentClassifier.classify(
+            normalized_data=data,
+            raw_data=raw_data,
+        )
+
+        supplier_or_customer = (
+            data.get("customer_name")
+            or data.get("client_name")
+            or data.get("supplier_name")
+        )
+
         issue_date_raw = data.get("issue_date")
         total_amount_raw = data.get("total_amount")
         vat_rate_raw = data.get("vat_rate")
@@ -58,21 +71,23 @@ class FinancialEntryService:
             tenant_id=extraction.tenant_id,
             document_id=extraction.document_id,
             extraction_run_id=extraction.id,
-            kind="expense",
+            kind=entry_kind,
             issue_date=issue_date_value,
-            supplier_or_customer=supplier_name,
+            supplier_or_customer=supplier_or_customer,
             tax_base=tax_base,
             tax_amount=tax_amount,
             total_amount=total_amount,
             currency="EUR",
             category=document_type,
             status_review="pending",
-            notes="Entrada creada automáticamente desde extraction_run mock"
+            notes=f"Entrada creada automáticamente desde extraction_run ({entry_kind})"
         )
 
         db.add(entry)
         db.commit()
         db.refresh(entry)
+
+        FinancialMovementWriter.sync_from_financial_entry(db, entry)
 
         return entry
 
@@ -95,14 +110,13 @@ class FinancialEntryService:
             )
             .first()
         )
-    
+
     @staticmethod
     def review_entry(
         db: Session,
         entry: FinancialEntry,
         payload
     ) -> FinancialEntry:
-
         entry.status_review = payload.status_review
 
         if payload.supplier_or_customer is not None:
@@ -123,8 +137,12 @@ class FinancialEntryService:
         if payload.category is not None:
             entry.category = payload.category
 
+        if payload.kind is not None:
+            entry.kind = payload.kind
+
         db.commit()
         db.refresh(entry)
 
-        return entry
+        FinancialMovementWriter.sync_from_financial_entry(db, entry)
 
+        return entry

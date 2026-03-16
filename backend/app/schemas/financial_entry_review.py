@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 class FinancialEntryReviewRequest(BaseModel):
     status_review: str
+    kind: str | None = None
     supplier_or_customer: str | None = None
     issue_date: date | None = None
     tax_base: Decimal | None = None
