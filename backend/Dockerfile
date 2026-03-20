@@ -19,5 +19,5 @@ COPY . .
 # Exponer el puerto
 EXPOSE 8000
 
-# Comando para arrancar en producción
-CMD ["gunicorn", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "app.main:app", "--bind", "0.0.0.0:8000"]
+# Comando para arrancar en producción (usando la variable PORT de Render)
+CMD ["sh", "-c", "gunicorn -w 2 -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:${PORT:-8000}"]
