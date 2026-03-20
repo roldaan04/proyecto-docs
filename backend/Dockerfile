@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
 # Copiar requerimientos e instalar
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir gunicorn uvicorn
+RUN pip install --no-cache-dir psycopg2-binary supabase gunicorn uvicorn
 
 # Copiar el resto del código
 COPY . .
