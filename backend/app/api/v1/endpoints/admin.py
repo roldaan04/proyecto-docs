@@ -3,15 +3,15 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from uuid import UUID
 
-from app.api.v1.endpoints import auth
 from app.core.database import get_db
+from app.core.dependencies import get_current_user
 from app.models.user import User
 from app.schemas.user import UserResponse
 
 router = APIRouter()
 
 def get_current_superuser(
-    current_user: User = Depends(auth.get_current_active_user),
+    current_user: User = Depends(get_current_user),
 ) -> User:
     if not current_user.is_superuser:
         raise HTTPException(
