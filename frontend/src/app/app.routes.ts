@@ -12,6 +12,9 @@ import { FinancialEntriesPageComponent } from './financial-entries/financial-ent
 import { FinancialMovementsPageComponent } from './financial-movements/financial-movements-page.component';
 import { ManualMovementsPageComponent } from './manual-movements/manual-movements-page.component';
 import { ReviewInboxPageComponent } from './review-inbox/review-inbox-page.component';
+import { adminGuard } from './core/guards/admin.guard';
+import { UserManagementComponent } from './features/admin/pages/user-management/user-management.component';
+
 
 export const routes: Routes = [
   {
