@@ -57,6 +57,7 @@ class FinancialMovementWriter:
     def create_from_financial_entry(
         db: Session,
         entry: FinancialEntry,
+        irpf_amount: Decimal | None = None,
     ) -> FinancialMovement:
         movement = FinancialMovement(
             tenant_id=entry.tenant_id,
@@ -76,10 +77,10 @@ class FinancialMovementWriter:
             business_area="general",
             net_amount=FinancialMovementWriter._safe_decimal(entry.tax_base),
             tax_amount=FinancialMovementWriter._safe_decimal(entry.tax_amount),
-            withholding_amount=Decimal("0.00"),
+            withholding_amount=irpf_amount if irpf_amount is not None else Decimal("0.00"),
             total_amount=FinancialMovementWriter._safe_decimal(entry.total_amount),
             currency=entry.currency or "EUR",
-            document_type=entry.category,
+            document_type=None,
             confidence_score=None,
             needs_review=(entry.status_review == "pending"),
             notes=f"Movimiento generado desde FinancialEntry {entry.id}",
@@ -94,11 +95,12 @@ class FinancialMovementWriter:
     def sync_from_financial_entry(
         db: Session,
         entry: FinancialEntry,
+        irpf_amount: Decimal | None = None,
     ) -> FinancialMovement:
         movement = FinancialMovementWriter.get_by_financial_entry_id(db, entry.id)
 
         if not movement:
-            return FinancialMovementWriter.create_from_financial_entry(db, entry)
+            return FinancialMovementWriter.create_from_financial_entry(db, entry, irpf_amount=irpf_amount)
 
         movement.movement_date = entry.issue_date
         movement.kind = entry.kind
@@ -112,9 +114,10 @@ class FinancialMovementWriter:
         movement.category = entry.category
         movement.net_amount = FinancialMovementWriter._safe_decimal(entry.tax_base)
         movement.tax_amount = FinancialMovementWriter._safe_decimal(entry.tax_amount)
+        if irpf_amount is not None:
+            movement.withholding_amount = irpf_amount
         movement.total_amount = FinancialMovementWriter._safe_decimal(entry.total_amount)
         movement.currency = entry.currency or "EUR"
-        movement.document_type = entry.category
         movement.needs_review = (entry.status_review == "pending")
         movement.notes = f"Movimiento sincronizado desde FinancialEntry {entry.id}"
 

@@ -12,6 +12,7 @@ export interface FinancialEntryItem {
   currency: string;
   category: string | null;
   status_review: string;
+  needs_review: boolean;
   notes: string | null;
   created_at: string;
   updated_at: string;
@@ -19,6 +20,7 @@ export interface FinancialEntryItem {
 
 export interface FinancialEntryReviewRequest {
   status_review: string;
+  kind?: string | null;
   supplier_or_customer?: string | null;
   issue_date?: string | null;
   tax_base?: number | null;

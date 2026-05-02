@@ -10,10 +10,16 @@ import {
   TaxMonthlyFlowRow,
   ThirdPartyMetric,
 } from '../../../core/interfaces/dashboard.interface';
-import { DashboardService } from '../../../core/services/dashboard.service';
+import { DashboardService, PeriodParams } from '../../../core/services/dashboard.service';
 import { ChartComponent } from '../../../shared/components/chart/chart.component';
 
 export type DashboardTab = 'overview' | 'income' | 'expenses' | 'taxes' | 'third-parties';
+export type PeriodKey = 'all' | 'year' | 'year_prev' | 'q1' | 'q2' | 'q3' | 'q4' | 'month';
+
+export interface PeriodOption {
+  key: PeriodKey;
+  label: string;
+}
 
 @Component({
   selector: 'app-dashboard-page',
@@ -25,6 +31,22 @@ export class DashboardPageComponent {
   private readonly dashboardService = inject(DashboardService);
 
   readonly activeTab = signal<DashboardTab>('overview');
+  readonly activePeriod = signal<PeriodKey>('all');
+
+  readonly periodOptions: PeriodOption[] = (() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    return [
+      { key: 'all', label: 'Todo' },
+      { key: 'year', label: `${y}` },
+      { key: 'year_prev', label: `${y - 1}` },
+      { key: 'q1', label: `Q1 ${y}` },
+      { key: 'q2', label: `Q2 ${y}` },
+      { key: 'q3', label: `Q3 ${y}` },
+      { key: 'q4', label: `Q4 ${y}` },
+      { key: 'month', label: new Date(y, now.getMonth(), 1).toLocaleString('es', { month: 'long', year: 'numeric' }) },
+    ];
+  })();
   
   readonly summary = signal<DashboardSummary | null>(null);
   readonly monthlyFlow = signal<MonthlyFlowRow[]>([]);
@@ -40,13 +62,40 @@ export class DashboardPageComponent {
   readonly hasNegativeProfit = computed(() => {
     const data = this.summary();
     if (!data) return false;
-    return this.toNumber(data.net_profit) < 0;
+    return this.toNumber(data.margin_cash ?? data.net_profit) < 0;
   });
 
   readonly hasPositiveProfit = computed(() => {
     const data = this.summary();
     if (!data) return false;
-    return this.toNumber(data.net_profit) > 0;
+    return this.toNumber(data.margin_cash ?? data.net_profit) > 0;
+  });
+
+  readonly hasNegativeBase = computed(() => {
+    const data = this.summary();
+    if (!data) return false;
+    return this.toNumber(data.margin_base) < 0;
+  });
+
+  readonly hasPositiveBase = computed(() => {
+    const data = this.summary();
+    if (!data) return false;
+    return this.toNumber(data.margin_base) > 0;
+  });
+
+  readonly vatState = computed((): 'pagar' | 'compensar' | 'neutro' => {
+    const data = this.summary();
+    if (!data) return 'neutro';
+    const balance = this.toNumber(data.vat_balance);
+    if (balance > 0) return 'pagar';
+    if (balance < 0) return 'compensar';
+    return 'neutro';
+  });
+
+  readonly totalRetentions = computed(() => {
+    const data = this.summary();
+    if (!data) return 0;
+    return this.toNumber(data.retention_sales) + this.toNumber(data.retention_rent);
   });
 
   readonly maxMonthlyValue = computed(() => {
@@ -177,18 +226,45 @@ export class DashboardPageComponent {
     this.activeTab.set(tab);
   }
 
+  setPeriod(period: PeriodKey): void {
+    this.activePeriod.set(period);
+    this.loadDashboard();
+  }
+
+  buildPeriodParams(key: PeriodKey): PeriodParams {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth() + 1;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const fmt = (yr: number, mo: number, day: number) => `${yr}-${pad(mo)}-${pad(day)}`;
+    const lastDay = (yr: number, mo: number) => new Date(yr, mo, 0).getDate();
+
+    switch (key) {
+      case 'year':      return { date_from: fmt(y, 1, 1), date_to: fmt(y, 12, 31) };
+      case 'year_prev': return { date_from: fmt(y - 1, 1, 1), date_to: fmt(y - 1, 12, 31) };
+      case 'q1':        return { date_from: fmt(y, 1, 1), date_to: fmt(y, 3, 31) };
+      case 'q2':        return { date_from: fmt(y, 4, 1), date_to: fmt(y, 6, 30) };
+      case 'q3':        return { date_from: fmt(y, 7, 1), date_to: fmt(y, 9, 30) };
+      case 'q4':        return { date_from: fmt(y, 10, 1), date_to: fmt(y, 12, 31) };
+      case 'month':     return { date_from: fmt(y, m, 1), date_to: fmt(y, m, lastDay(y, m)) };
+      default:          return {};
+    }
+  }
+
   loadDashboard(): void {
     this.loading.set(true);
     this.error.set(null);
 
+    const period = this.buildPeriodParams(this.activePeriod());
+
     forkJoin({
-      summary: this.dashboardService.getOverview(),
-      monthly: this.dashboardService.getMonthlyFlow(),
-      suppliers: this.dashboardService.getTopSuppliers(),
-      customers: this.dashboardService.getTopCustomers(),
-      expensesByCat: this.dashboardService.getExpensesByCategory(),
-      incomeByCat: this.dashboardService.getIncomeByCategory(),
-      taxFlow: this.dashboardService.getTaxMonthlyFlow(),
+      summary: this.dashboardService.getOverview(period),
+      monthly: this.dashboardService.getMonthlyFlow(period),
+      suppliers: this.dashboardService.getTopSuppliers(5, period),
+      customers: this.dashboardService.getTopCustomers(5, period),
+      expensesByCat: this.dashboardService.getExpensesByCategory(6, period),
+      incomeByCat: this.dashboardService.getIncomeByCategory(6, period),
+      taxFlow: this.dashboardService.getTaxMonthlyFlow(period),
     }).subscribe({
       next: (data) => {
         this.summary.set(data.summary);

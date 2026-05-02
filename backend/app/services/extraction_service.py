@@ -164,26 +164,91 @@ class ExtractionService:
             # Ajuste de base imponible
             raw_data["base"] = raw_data["total"] - raw_data["vat"]
 
-            # 5. Normalizar resultado
+            # 5. Normalizar resultado base (regex)
             extraction.raw_output_json = raw_data
-            extraction.normalized_output_json = {
+
+            num_match = re.search(r"(?:Factura|Nº|Num|Número).*?([A-Z0-9\-/]{3,})", full_text, re.IGNORECASE)
+            invoice_number_regex = num_match.group(1) if num_match else "S/N"
+
+            regex_normalized = {
                 "document_type": "invoice" if any(x in full_text.upper() for x in ["FACTURA", "INVOICE"]) else "ticket",
                 "supplier_name": raw_data.get("issuer"),
                 "receiver_name": raw_data.get("receiver"),
                 "customer_name": raw_data.get("receiver") or raw_data["supplier"],
-                "invoice_number": "S/N",
+                "invoice_number": invoice_number_regex,
                 "issue_date": raw_data["date"],
                 "total_amount": raw_data["total"],
                 "tax_amount": raw_data["vat"],
                 "tax_base": raw_data["base"],
             }
 
-            # Intento de número de factura
-            num_match = re.search(r"(?:Factura|Nº|Num|Número).*?([A-Z0-9\-/]{3,})", full_text, re.IGNORECASE)
-            if num_match:
-                extraction.normalized_output_json["invoice_number"] = num_match.group(1)
+            # 6. Intentar extracción IA (con fallback a regex)
+            tenant_name_for_ai = None
+            tenant_aliases_for_ai: list[str] = []
+            try:
+                from app.models.tenant import Tenant as TenantModel
+                tenant_obj = db.query(TenantModel).filter(TenantModel.id == document.tenant_id).first()
+                if tenant_obj:
+                    tenant_name_for_ai = tenant_obj.name
+                    # slug como alias adicional (ej. "tuadministrativo")
+                    if tenant_obj.slug and tenant_obj.slug != tenant_obj.name:
+                        tenant_aliases_for_ai.append(tenant_obj.slug)
+                    # fiscal_name y tax_id si el modelo los tuviera en el futuro
+                    fiscal_name = getattr(tenant_obj, "fiscal_name", None)
+                    if fiscal_name:
+                        tenant_aliases_for_ai.append(fiscal_name)
+                    tax_id = getattr(tenant_obj, "tax_id", None)
+                    if tax_id:
+                        tenant_aliases_for_ai.append(tax_id)
+            except Exception:
+                pass
 
-            extraction.confidence_score = 0.85
+            ai_result = None
+            if full_text.strip():
+                from app.services.ai_extraction_service import AIExtractionService
+                ai_result = AIExtractionService.extract(
+                    full_text,
+                    tenant_name=tenant_name_for_ai,
+                    tenant_aliases=tenant_aliases_for_ai,
+                )
+
+            if ai_result:
+                logger.warning("[NORMALIZED] motor=ai | doc_type=%s | kind=%s | third_party=%s | total=%s | needs_review=%s",
+                    ai_result.document_type, ai_result.operation_kind, ai_result.third_party_name,
+                    ai_result.total_amount if ai_result.total_amount is not None else raw_data["total"],
+                    ai_result.needs_review,
+                )
+                extraction.normalized_output_json = {
+                    "document_type": ai_result.document_type,
+                    "operation_kind": ai_result.operation_kind,
+                    "supplier_name": ai_result.issuer_name,
+                    "receiver_name": ai_result.receiver_name,
+                    "customer_name": ai_result.receiver_name or ai_result.third_party_name,
+                    "third_party_name": ai_result.third_party_name,
+                    "issuer_tax_id": ai_result.issuer_tax_id,
+                    "receiver_tax_id": ai_result.receiver_tax_id,
+                    "invoice_number": ai_result.invoice_number or invoice_number_regex,
+                    "issue_date": ai_result.issue_date or raw_data["date"],
+                    "due_date": ai_result.due_date,
+                    "total_amount": ai_result.total_amount if ai_result.total_amount is not None else raw_data["total"],
+                    "tax_amount": ai_result.vat_amount if ai_result.vat_amount is not None else raw_data["vat"],
+                    "tax_base": ai_result.tax_base if ai_result.tax_base is not None else raw_data["base"],
+                    "irpf_amount": ai_result.irpf_amount,
+                    "currency": ai_result.currency,
+                    "category": ai_result.category,
+                    "needs_review": ai_result.needs_review,
+                    "review_reason": ai_result.review_reason,
+                    # señales para classifier
+                    "has_elaborado_por": raw_data.get("has_elaborado_por", False),
+                }
+                extraction.confidence_score = ai_result.confidence_score
+            else:
+                logger.warning("[NORMALIZED] motor=regex_fallback | doc_type=%s | kind=(pendiente clasificador) | total=%s",
+                    regex_normalized.get("document_type"), regex_normalized.get("total_amount"),
+                )
+                extraction.normalized_output_json = regex_normalized
+                extraction.confidence_score = 0.75
+
             extraction.status = "completed"
             extraction.finished_at = datetime.utcnow()
 

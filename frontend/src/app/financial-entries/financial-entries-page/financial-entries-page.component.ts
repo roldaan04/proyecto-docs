@@ -6,6 +6,8 @@ import { FinancialEntriesService } from '../../core/services/financial-entries.s
 import { FinancialEntryItem, FinancialEntryReviewRequest } from '../../core/interfaces/financial-entry.interface';
 import { ToastService } from '../../core/services/toast.service';
 
+type StatusFilter = 'all' | 'pending' | 'revisado' | 'descartado' | 'error';
+
 @Component({
   selector: 'app-financial-entries-page',
   standalone: true,
@@ -21,35 +23,77 @@ export class FinancialEntriesPageComponent {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly search = signal('');
+  readonly filterStatus = signal<StatusFilter>('all');
   readonly selectedEntry = signal<FinancialEntryItem | null>(null);
   readonly savingReview = signal(false);
   readonly reviewError = signal<string | null>(null);
 
+  // 16 categorías de negocio en español
   readonly categoryOptions = [
-    { value: 'invoice', label: 'Factura' },
-    { value: 'receipt', label: 'Recibo' },
-    { value: 'ticket', label: 'Ticket' },
-    { value: 'expense', label: 'Gasto' },
-    { value: 'income', label: 'Ingreso' },
+    { value: 'Servicios administrativos', label: 'Servicios administrativos' },
+    { value: 'Digitalización', label: 'Digitalización' },
+    { value: 'Desarrollo / tecnología', label: 'Desarrollo / tecnología' },
+    { value: 'Formación / talleres', label: 'Formación / talleres' },
+    { value: 'Consultoría', label: 'Consultoría' },
+    { value: 'Otros ingresos', label: 'Otros ingresos' },
+    { value: 'Software y suscripciones', label: 'Software y suscripciones' },
+    { value: 'Seguros', label: 'Seguros' },
+    { value: 'Telecomunicaciones', label: 'Telecomunicaciones' },
+    { value: 'Alquileres', label: 'Alquileres' },
+    { value: 'Suministros', label: 'Suministros' },
+    { value: 'Material de oficina', label: 'Material de oficina' },
+    { value: 'Gestoría / asesoría', label: 'Gestoría / asesoría' },
+    { value: 'Transporte', label: 'Transporte' },
+    { value: 'Bancos y comisiones', label: 'Bancos y comisiones' },
+    { value: 'Otros gastos', label: 'Otros gastos' },
   ];
+
+  readonly statusOptions = [
+    { value: 'pending', label: 'Pendiente' },
+    { value: 'revisado', label: 'Revisado' },
+    { value: 'descartado', label: 'Descartado' },
+    { value: 'error', label: 'Error' },
+  ];
+
+  readonly kindOptions = [
+    { value: 'income', label: 'Ingreso' },
+    { value: 'expense', label: 'Gasto' },
+  ];
+
+  readonly pendingCount = computed(
+    () => this.entries().filter((e) => e.status_review === 'pending').length,
+  );
+
+  readonly needsReviewCount = computed(
+    () => this.entries().filter((e) => e.needs_review && e.status_review === 'pending').length,
+  );
 
   readonly filteredEntries = computed(() => {
     const term = this.search().trim().toLowerCase();
-    if (!term) return this.entries();
+    const status = this.filterStatus();
 
-    return this.entries().filter((entry) =>
-      [
-        entry.supplier_or_customer ?? '',
-        entry.category ?? '',
-        entry.kind,
-        entry.status_review,
-        entry.currency,
-      ].some((value) => value.toLowerCase().includes(term)),
-    );
+    return this.entries().filter((entry) => {
+      const matchesStatus =
+        status === 'all' ||
+        this._normalizeStatus(entry.status_review) === status;
+
+      const matchesSearch =
+        !term ||
+        [
+          entry.supplier_or_customer ?? '',
+          entry.category ?? '',
+          entry.kind,
+          entry.status_review,
+          entry.currency,
+        ].some((v) => v.toLowerCase().includes(term));
+
+      return matchesStatus && matchesSearch;
+    });
   });
 
   readonly reviewForm = this.fb.group({
     status_review: ['', Validators.required],
+    kind: [''],
     supplier_or_customer: [''],
     issue_date: [''],
     tax_base: [null as number | null],
@@ -80,12 +124,17 @@ export class FinancialEntriesPageComponent {
     this.search.set(value);
   }
 
+  setFilterStatus(status: StatusFilter): void {
+    this.filterStatus.set(status);
+  }
+
   openReview(entry: FinancialEntryItem): void {
     this.selectedEntry.set(entry);
     this.reviewError.set(null);
 
     this.reviewForm.patchValue({
-      status_review: entry.status_review,
+      status_review: this._normalizeStatus(entry.status_review),
+      kind: entry.kind,
       supplier_or_customer: entry.supplier_or_customer ?? '',
       issue_date: entry.issue_date ?? '',
       tax_base: entry.tax_base,
@@ -114,6 +163,7 @@ export class FinancialEntriesPageComponent {
 
     const payload: FinancialEntryReviewRequest = {
       status_review: raw.status_review || 'pending',
+      kind: raw.kind || null,
       supplier_or_customer: raw.supplier_or_customer || null,
       issue_date: raw.issue_date || null,
       tax_base: raw.tax_base,
@@ -141,66 +191,10 @@ export class FinancialEntriesPageComponent {
       });
   }
 
-  getReviewStatusClasses(status: string): string {
-    const value = (status || '').toLowerCase();
-
-    if (value === 'approved') return 'bg-green-100 text-green-700 border-green-200';
-    if (value === 'rejected') return 'bg-red-100 text-red-700 border-red-200';
-    if (value === 'pending') return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-
-    return 'bg-slate-100 text-slate-700 border-slate-200';
-  }
-
-  getReviewStatusLabel(status: string | null | undefined): string {
-    const value = (status || '').toLowerCase();
-
-    switch (value) {
-      case 'pending':
-        return 'Pendiente';
-      case 'approved':
-        return 'Aprobado';
-      case 'rejected':
-        return 'Rechazado';
-      default:
-        return status || '-';
-    }
-  }
-
-  getCategoryLabel(category: string | null | undefined): string {
-    const value = (category || '').trim().toLowerCase();
-
-    switch (value) {
-      case 'invoice':
-        return 'Factura';
-      case 'receipt':
-        return 'Recibo';
-      case 'ticket':
-        return 'Ticket';
-      case 'expense':
-        return 'Gasto';
-      case 'income':
-        return 'Ingreso';
-      default:
-        return category || '-';
-    }
-  }
-
-  getKindLabel(kind: string | null | undefined): string {
-    const value = (kind || '').trim().toLowerCase();
-
-    switch (value) {
-      case 'expense':
-        return 'Gasto';
-      case 'income':
-        return 'Ingreso';
-      default:
-        return kind || '-';
-    }
-  }
-
   quickApprove(entry: FinancialEntryItem): void {
     const payload: FinancialEntryReviewRequest = {
-      status_review: 'approved',
+      status_review: 'revisado',
+      kind: entry.kind,
       supplier_or_customer: entry.supplier_or_customer,
       issue_date: entry.issue_date,
       tax_base: entry.tax_base,
@@ -214,11 +208,52 @@ export class FinancialEntriesPageComponent {
         this.entries.update((list) =>
           list.map((item) => (item.id === updated.id ? updated : item))
         );
-        this.toast.show('Registro aprobado correctamente.', 'success');
+        this.toast.show('Registro marcado como revisado.', 'success');
       },
       error: (err) => {
         this.toast.show(err?.error?.detail || 'No se pudo aprobar el registro.', 'error');
       },
     });
+  }
+
+  getReviewStatusClasses(status: string): string {
+    switch (this._normalizeStatus(status)) {
+      case 'revisado':  return 'bg-green-100 text-green-700 border-green-200';
+      case 'descartado': return 'bg-red-100 text-red-700 border-red-200';
+      case 'pending':   return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+      case 'error':     return 'bg-orange-100 text-orange-700 border-orange-200';
+      default:          return 'bg-slate-100 text-slate-700 border-slate-200';
+    }
+  }
+
+  getReviewStatusLabel(status: string | null | undefined): string {
+    switch (this._normalizeStatus(status ?? '')) {
+      case 'pending':   return 'Pendiente';
+      case 'revisado':  return 'Revisado';
+      case 'descartado': return 'Descartado';
+      case 'error':     return 'Error';
+      default:          return status || '-';
+    }
+  }
+
+  getKindLabel(kind: string | null | undefined): string {
+    switch ((kind || '').trim().toLowerCase()) {
+      case 'expense': return 'Gasto';
+      case 'income':  return 'Ingreso';
+      default:        return kind || '-';
+    }
+  }
+
+  // Mapea valores legacy (approved→revisado, rejected→descartado) y nuevos por igual
+  private _normalizeStatus(status: string): StatusFilter {
+    switch ((status || '').toLowerCase()) {
+      case 'approved':   return 'revisado';
+      case 'revisado':   return 'revisado';
+      case 'rejected':   return 'descartado';
+      case 'descartado': return 'descartado';
+      case 'error':      return 'error';
+      case 'pending':    return 'pending';
+      default:           return 'all';
+    }
   }
 }

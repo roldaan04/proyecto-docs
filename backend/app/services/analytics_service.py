@@ -1,3 +1,4 @@
+from datetime import date as DateType
 from decimal import Decimal
 
 from sqlalchemy import Date, func
@@ -8,6 +9,15 @@ from app.models.financial_movement import FinancialMovement
 
 class AnalyticsService:
     @staticmethod
+    def _date_conditions(date_from: DateType | None, date_to: DateType | None) -> list:
+        conds = []
+        if date_from:
+            conds.append(FinancialMovement.movement_date >= date_from)
+        if date_to:
+            conds.append(FinancialMovement.movement_date <= date_to)
+        return conds
+
+    @staticmethod
     def _safe_decimal(value) -> Decimal:
         if value is None:
             return Decimal("0.00")
@@ -16,11 +26,12 @@ class AnalyticsService:
         return Decimal(str(value))
 
     @staticmethod
-    def get_overview(db: Session, tenant_id):
+    def get_overview(db: Session, tenant_id, date_from: DateType | None = None, date_to: DateType | None = None):
         # Base filters for consolidated movements
         base_filter = [
             FinancialMovement.tenant_id == tenant_id,
             FinancialMovement.status.in_(["proposed", "confirmed", "reconciled"]),
+            *AnalyticsService._date_conditions(date_from, date_to),
         ]
 
         # Total Income
@@ -95,9 +106,36 @@ class AnalyticsService:
             .scalar()
         )
 
-        # Burn Rate Calculation
-        fixed_categories = ["Alquiler", "Personal / Seguros Sociales", "Nóminas", "Estructura"]
-        variable_categories = ["Suscripciones / Software", "Marketing", "Suministros", "Otros"]
+        # Base imponible (net_amount)
+        base_income = (
+            db.query(func.sum(FinancialMovement.net_amount))
+            .filter(*base_filter, FinancialMovement.kind == "income")
+            .scalar()
+        )
+        base_expenses = (
+            db.query(func.sum(FinancialMovement.net_amount))
+            .filter(*base_filter, FinancialMovement.kind.in_(expense_kinds))
+            .scalar()
+        )
+        base_income = AnalyticsService._safe_decimal(base_income)
+        base_expenses = AnalyticsService._safe_decimal(base_expenses)
+
+        # Burn Rate — categorías alineadas con las definidas en Fase 1
+        fixed_categories = [
+            "Seguros",
+            "Software y suscripciones",
+            "Alquileres",
+            "Telecomunicaciones",
+            "Bancos y comisiones",
+        ]
+        variable_categories = [
+            "Transporte",
+            "Material de oficina",
+            "Suministros",
+            "Gestoría / asesoría",
+            "Formación / talleres",
+            "Otros gastos",
+        ]
 
         fixed_burn = (
             db.query(func.sum(FinancialMovement.total_amount))
@@ -116,13 +154,20 @@ class AnalyticsService:
             ).scalar()
         )
 
+        margin_cash = income_total - expense_total
+        margin_base = base_income - base_expenses
+
         return {
             "total_income": income_total,
             "total_expenses": expense_total,
-            "net_profit": income_total - expense_total,
+            "net_profit": margin_cash,          # alias legacy
+            "margin_cash": margin_cash,
+            "base_income": base_income,
+            "base_expenses": base_expenses,
+            "margin_base": margin_base,
             "vat_charged": vat_charged,
             "vat_supported": vat_supported,
-            "vat_balance": vat_supported - vat_charged,
+            "vat_balance": vat_charged - vat_supported,
             "retention_sales": retention_sales,
             "retention_rent": retention_rent,
             "average_ticket": AnalyticsService._safe_decimal(avg_ticket),
@@ -130,12 +175,12 @@ class AnalyticsService:
             "pending_reviews": int(pending_reviews or 0),
             "fixed_burn_rate": AnalyticsService._safe_decimal(fixed_burn),
             "variable_burn_rate": AnalyticsService._safe_decimal(variable_burn),
-            "forecast_vat": vat_supported - vat_charged,
+            "forecast_vat": vat_charged - vat_supported,
             "forecast_irpf": retention_sales + retention_rent,
         }
 
     @staticmethod
-    def get_monthly_flow(db: Session, tenant_id):
+    def get_monthly_flow(db: Session, tenant_id, date_from: DateType | None = None, date_to: DateType | None = None):
         # We use movement_date or created_at as fallback
         date_col = func.coalesce(FinancialMovement.movement_date, func.cast(FinancialMovement.created_at, Date))
         month_expr = func.to_char(date_col, "YYYY-MM")
@@ -151,6 +196,7 @@ class AnalyticsService:
             .filter(
                 FinancialMovement.tenant_id == tenant_id,
                 FinancialMovement.status.in_(["proposed", "confirmed", "reconciled"]),
+                *AnalyticsService._date_conditions(date_from, date_to),
             )
             .group_by(month_expr)
             .order_by(month_expr)
@@ -168,7 +214,7 @@ class AnalyticsService:
         ]
 
     @staticmethod
-    def get_top_customers(db: Session, tenant_id, limit: int = 5):
+    def get_top_customers(db: Session, tenant_id, limit: int = 5, date_from: DateType | None = None, date_to: DateType | None = None):
         rows = (
             db.query(
                 FinancialMovement.third_party_name.label("name"),
@@ -179,6 +225,7 @@ class AnalyticsService:
                 FinancialMovement.kind == "income",
                 FinancialMovement.status.in_(["proposed", "confirmed", "reconciled"]),
                 FinancialMovement.third_party_name.isnot(None),
+                *AnalyticsService._date_conditions(date_from, date_to),
             )
             .group_by(FinancialMovement.third_party_name)
             .order_by(func.sum(FinancialMovement.total_amount).desc())
@@ -188,7 +235,7 @@ class AnalyticsService:
         return [{"name": r.name, "amount": AnalyticsService._safe_decimal(r.amount)} for r in rows]
 
     @staticmethod
-    def get_top_suppliers(db: Session, tenant_id, limit: int = 5):
+    def get_top_suppliers(db: Session, tenant_id, limit: int = 5, date_from: DateType | None = None, date_to: DateType | None = None):
         expense_kinds = ["expense", "tax", "payroll", "social_security", "financing"]
         rows = (
             db.query(
@@ -200,6 +247,7 @@ class AnalyticsService:
                 FinancialMovement.kind.in_(expense_kinds),
                 FinancialMovement.status.in_(["proposed", "confirmed", "reconciled"]),
                 FinancialMovement.third_party_name.isnot(None),
+                *AnalyticsService._date_conditions(date_from, date_to),
             )
             .group_by(FinancialMovement.third_party_name)
             .order_by(func.sum(FinancialMovement.total_amount).desc())
@@ -209,7 +257,7 @@ class AnalyticsService:
         return [{"name": r.name, "amount": AnalyticsService._safe_decimal(r.amount)} for r in rows]
 
     @staticmethod
-    def get_expenses_by_category(db: Session, tenant_id, limit: int = 6):
+    def get_expenses_by_category(db: Session, tenant_id, limit: int = 6, date_from: DateType | None = None, date_to: DateType | None = None):
         expense_kinds = ["expense", "tax", "payroll", "social_security", "financing"]
         rows = (
             db.query(
@@ -221,6 +269,7 @@ class AnalyticsService:
                 FinancialMovement.kind.in_(expense_kinds),
                 FinancialMovement.status.in_(["proposed", "confirmed", "reconciled"]),
                 FinancialMovement.category.isnot(None),
+                *AnalyticsService._date_conditions(date_from, date_to),
             )
             .group_by(FinancialMovement.category)
             .order_by(func.sum(FinancialMovement.total_amount).desc())
@@ -237,7 +286,7 @@ class AnalyticsService:
         ]
 
     @staticmethod
-    def get_income_by_category(db: Session, tenant_id, limit: int = 6):
+    def get_income_by_category(db: Session, tenant_id, limit: int = 6, date_from: DateType | None = None, date_to: DateType | None = None):
         rows = (
             db.query(
                 FinancialMovement.category.label("category_name"),
@@ -248,6 +297,7 @@ class AnalyticsService:
                 FinancialMovement.kind == "income",
                 FinancialMovement.status.in_(["proposed", "confirmed", "reconciled"]),
                 FinancialMovement.category.isnot(None),
+                *AnalyticsService._date_conditions(date_from, date_to),
             )
             .group_by(FinancialMovement.category)
             .order_by(func.sum(FinancialMovement.total_amount).desc())
@@ -264,7 +314,7 @@ class AnalyticsService:
         ]
 
     @staticmethod
-    def get_tax_monthly_flow(db: Session, tenant_id):
+    def get_tax_monthly_flow(db: Session, tenant_id, date_from: DateType | None = None, date_to: DateType | None = None):
         date_col = func.coalesce(FinancialMovement.movement_date, func.cast(FinancialMovement.created_at, Date))
         month_expr = func.to_char(date_col, "YYYY-MM")
         expense_kinds = ["expense", "tax", "payroll", "social_security", "financing"]
@@ -276,13 +326,14 @@ class AnalyticsService:
                 func.sum(FinancialMovement.tax_amount).filter(FinancialMovement.kind.in_(expense_kinds)).label("vat_supported"),
                 func.sum(FinancialMovement.withholding_amount).filter(FinancialMovement.kind == "income").label("retention_sales"),
                 func.sum(FinancialMovement.withholding_amount).filter(
-                    FinancialMovement.kind == "expense", 
+                    FinancialMovement.kind == "expense",
                     FinancialMovement.category.ilike("%alquiler%")
                 ).label("retention_rent"),
             )
             .filter(
                 FinancialMovement.tenant_id == tenant_id,
                 FinancialMovement.status.in_(["proposed", "confirmed", "reconciled"]),
+                *AnalyticsService._date_conditions(date_from, date_to),
             )
             .group_by(month_expr)
             .order_by(month_expr)
@@ -294,7 +345,7 @@ class AnalyticsService:
                 "month": row.month,
                 "vat_charged": AnalyticsService._safe_decimal(row.vat_charged),
                 "vat_supported": AnalyticsService._safe_decimal(row.vat_supported),
-                "vat_balance": AnalyticsService._safe_decimal(row.vat_supported) - AnalyticsService._safe_decimal(row.vat_charged),
+                "vat_balance": AnalyticsService._safe_decimal(row.vat_charged) - AnalyticsService._safe_decimal(row.vat_supported),
                 "retention_sales": AnalyticsService._safe_decimal(row.retention_sales),
                 "retention_rent": AnalyticsService._safe_decimal(row.retention_rent),
             }

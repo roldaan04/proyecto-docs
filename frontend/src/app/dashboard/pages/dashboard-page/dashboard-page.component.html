@@ -9,9 +9,9 @@
         <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">
           Inteligencia de Negocio
         </p>
-        <h1 class="mt-2 text-3xl font-bold tracking-tight sm:text-4xl text-slate-900">Panel Gestión Anual</h1>
+        <h1 class="mt-2 text-3xl font-bold tracking-tight sm:text-4xl text-slate-900">Panel de Gestión</h1>
         <p class="mt-2 max-w-2xl text-sm sm:text-base text-slate-500">
-          Control financiero total: Consolidation de ingresos, gastos, impuestos y análisis de terceros.
+          Control financiero total: ingresos, gastos, impuestos y análisis de terceros.
         </p>
       </div>
 
@@ -59,6 +59,24 @@
         </button>
       </nav>
     </div>
+
+    <!-- Period Selector -->
+    <div class="relative border-t border-slate-100 pt-4 flex flex-wrap items-center gap-2">
+      <span class="text-xs font-bold uppercase tracking-widest text-slate-400 mr-1">Periodo:</span>
+      @for (opt of periodOptions; track opt.key) {
+        <button
+          (click)="setPeriod(opt.key)"
+          class="rounded-xl px-3 py-1.5 text-xs font-bold transition-all"
+          [class.bg-blue-600]="activePeriod() === opt.key"
+          [class.text-white]="activePeriod() === opt.key"
+          [class.shadow-sm]="activePeriod() === opt.key"
+          [class.bg-slate-100]="activePeriod() !== opt.key"
+          [class.text-slate-500]="activePeriod() !== opt.key"
+          [class.hover:bg-slate-200]="activePeriod() !== opt.key">
+          {{ opt.label }}
+        </button>
+      }
+    </div>
   </div>
 
   @if (loading()) {
@@ -82,21 +100,63 @@
     <!-- 1. OVERVIEW TAB -->
     @if (activeTab() === 'overview') {
       <div class="animate-in slide-in-from-bottom-4 duration-500 space-y-6">
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-6 shadow-sm">
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Facturación Total</p>
-            <p class="mt-2 text-3xl font-black text-emerald-600">{{ toNumber(data.total_income) | number:'1.2-2' }} €</p>
+
+        <!-- Sección CAJA -->
+        <div>
+          <p class="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400">Flujo de caja · importes con IVA</p>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-6 shadow-sm">
+              <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Facturación Total</p>
+              <p class="mt-2 text-3xl font-black text-emerald-600">{{ toNumber(data.total_income) | number:'1.2-2' }} €</p>
+              <p class="mt-1 text-xs text-slate-400">Total cobrado a clientes (IVA incluido)</p>
+            </div>
+            <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-6 shadow-sm">
+              <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Gastos Totales</p>
+              <p class="mt-2 text-3xl font-black text-rose-600">{{ toNumber(data.total_expenses) | number:'1.2-2' }} €</p>
+              <p class="mt-1 text-xs text-slate-400">Total pagado a proveedores (IVA incluido)</p>
+            </div>
+            <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-6 shadow-sm"
+                 [class.bg-emerald-50]="hasPositiveProfit()" [class.bg-rose-50]="hasNegativeProfit()">
+              <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Margen de Caja</p>
+              <p class="mt-2 text-3xl font-black"
+                 [class.text-emerald-700]="hasPositiveProfit()"
+                 [class.text-rose-700]="hasNegativeProfit()">
+                {{ toNumber(data.margin_cash ?? data.net_profit) | number:'1.2-2' }} €
+              </p>
+              <p class="mt-1 text-xs text-slate-400">Facturación menos gastos totales</p>
+            </div>
           </div>
-          <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-6 shadow-sm">
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Gastos Totales</p>
-            <p class="mt-2 text-3xl font-black text-rose-600">{{ toNumber(data.total_expenses) | number:'1.2-2' }} €</p>
-          </div>
-          <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-6 shadow-sm"
-               [class.bg-emerald-50]="hasPositiveProfit()" [class.bg-rose-50]="hasNegativeProfit()">
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Margen Neto</p>
-            <p class="mt-2 text-3xl font-black" [class.text-emerald-700]="hasPositiveProfit()" [class.text-rose-700]="hasNegativeProfit()">
-              {{ toNumber(data.net_profit) | number:'1.2-2' }} €
-            </p>
+        </div>
+
+        <!-- Sección BASE IMPONIBLE -->
+        <div>
+          <p class="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400">Base imponible · importes sin IVA</p>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="rounded-3xl border border-emerald-100 bg-emerald-50/30 p-6 shadow-sm">
+              <p class="text-xs font-bold text-emerald-600 uppercase tracking-widest">Ingresos Base</p>
+              <p class="mt-2 text-3xl font-black text-emerald-700">{{ toNumber(data.base_income) | number:'1.2-2' }} €</p>
+              <p class="mt-1 text-xs text-emerald-600">Base imponible de ventas (sin IVA)</p>
+            </div>
+            <div class="rounded-3xl border border-rose-100 bg-rose-50/30 p-6 shadow-sm">
+              <p class="text-xs font-bold text-rose-500 uppercase tracking-widest">Gastos Base</p>
+              <p class="mt-2 text-3xl font-black text-rose-600">{{ toNumber(data.base_expenses) | number:'1.2-2' }} €</p>
+              <p class="mt-1 text-xs text-rose-500">Base imponible de gastos (sin IVA)</p>
+            </div>
+            <div class="rounded-3xl border p-6 shadow-sm"
+                 [class.border-emerald-100]="hasPositiveBase()"
+                 [class.bg-emerald-50]="hasPositiveBase()"
+                 [class.border-rose-100]="hasNegativeBase()"
+                 [class.bg-rose-50]="hasNegativeBase()"
+                 [class.border-slate-100]="!hasPositiveBase() && !hasNegativeBase()"
+                 [class.bg-slate-50]="!hasPositiveBase() && !hasNegativeBase()">
+              <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Margen Contable</p>
+              <p class="mt-2 text-3xl font-black"
+                 [class.text-emerald-700]="hasPositiveBase()"
+                 [class.text-rose-700]="hasNegativeBase()">
+                {{ toNumber(data.margin_base) | number:'1.2-2' }} €
+              </p>
+              <p class="mt-1 text-xs text-slate-400">Ingresos base menos gastos base</p>
+            </div>
           </div>
         </div>
 
@@ -105,11 +165,11 @@
           <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-8 shadow-sm">
             <h3 class="text-lg font-bold text-slate-900">Estructura de Gasto (Burn Rate)</h3>
             <p class="text-sm text-slate-500 mt-1 mb-6">Distribución entre gastos fijos y variables.</p>
-            
+
             <div class="space-y-6">
               <div>
                 <div class="flex justify-between mb-2">
-                  <span class="text-sm font-medium text-slate-600">Gasto Fijo (Estructura)</span>
+                  <span class="text-sm font-medium text-slate-600">Gasto Fijo</span>
                   <span class="text-sm font-bold text-slate-900">{{ toNumber(data.fixed_burn_rate) | number:'1.2-2' }} €</span>
                 </div>
                 <div class="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
@@ -129,7 +189,8 @@
 
               <div class="pt-4 border-t border-slate-50">
                 <p class="text-xs text-slate-400 italic">
-                  * Los gastos fijos incluyen alquileres, nóminas y seguros sociales. Los variables incluyen software, suministros y otros.
+                  * Fijo: seguros, software, alquileres, telecomunicaciones, comisiones bancarias.
+                  Variable: transporte, material de oficina, suministros, gestoría, formación.
                 </p>
               </div>
             </div>
@@ -139,12 +200,12 @@
           <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-8 shadow-sm">
             <h3 class="text-lg font-bold text-slate-900">Previsión de Impuestos</h3>
             <p class="text-sm text-slate-500 mt-1 mb-6">Dinero a reservar para próximas liquidaciones.</p>
-            
+
             <div class="grid grid-cols-2 gap-4">
               <div class="rounded-2xl bg-amber-50 p-5">
                 <p class="text-xs font-bold text-amber-600 uppercase tracking-wider">IVA (Estimado)</p>
                 <p class="mt-2 text-2xl font-black text-amber-700">{{ toNumber(data.forecast_vat) | number:'1.2-2' }} €</p>
-                <p class="text-[10px] text-amber-600 mt-1">Saldo acumulado IVA Sop - Rep</p>
+                <p class="text-[10px] text-amber-600 mt-1">IVA repercutido menos soportado</p>
               </div>
               <div class="rounded-2xl bg-indigo-50 p-5">
                 <p class="text-xs font-bold text-indigo-600 uppercase tracking-wider">IRPF (Retenciones)</p>
@@ -277,29 +338,116 @@
     <!-- 4. TAXES TAB -->
     @if (activeTab() === 'taxes') {
       <div class="animate-in slide-in-from-bottom-4 duration-500 space-y-6">
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-6 shadow-sm">
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Balance IVA</p>
-            <p class="mt-2 text-2xl font-black text-amber-600">{{ toNumber(data.vat_balance) | number:'1.2-2' }} €</p>
-          </div>
-          <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-6 shadow-sm">
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">IRPF Ventas (M.111)</p>
-            <p class="mt-2 text-2xl font-black text-indigo-600">{{ toNumber(data.retention_sales) | number:'1.2-2' }} €</p>
-          </div>
-          <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-6 shadow-sm">
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">IRPF Alquiler (M.115)</p>
-            <p class="mt-2 text-2xl font-black text-slate-800">{{ toNumber(data.retention_rent) | number:'1.2-2' }} €</p>
+
+        <!-- Sección IVA -->
+        <div>
+          <p class="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400">IVA · Impuesto sobre el Valor Añadido</p>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+            <!-- IVA Repercutido -->
+            <div class="rounded-3xl border border-emerald-100 bg-emerald-50/40 p-6 shadow-sm">
+              <p class="text-xs font-bold text-emerald-700 uppercase tracking-widest">IVA Repercutido</p>
+              <p class="mt-2 text-3xl font-black text-emerald-700">{{ toNumber(data.vat_charged) | number:'1.2-2' }} €</p>
+              <p class="mt-1 text-xs text-emerald-600">IVA cobrado a tus clientes en tus facturas de venta</p>
+            </div>
+
+            <!-- IVA Soportado -->
+            <div class="rounded-3xl border border-rose-100 bg-rose-50/40 p-6 shadow-sm">
+              <p class="text-xs font-bold text-rose-600 uppercase tracking-widest">IVA Soportado</p>
+              <p class="mt-2 text-3xl font-black text-rose-600">{{ toNumber(data.vat_supported) | number:'1.2-2' }} €</p>
+              <p class="mt-1 text-xs text-rose-500">IVA pagado a tus proveedores en facturas de compra</p>
+            </div>
+
+            <!-- Balance IVA con estado -->
+            <div class="rounded-3xl border p-6 shadow-sm"
+                 [class.border-amber-200]="vatState() === 'pagar'"
+                 [class.bg-amber-50]="vatState() === 'pagar'"
+                 [class.border-blue-100]="vatState() === 'compensar'"
+                 [class.bg-blue-50]="vatState() === 'compensar'"
+                 [class.border-slate-100]="vatState() === 'neutro'"
+                 [class.bg-slate-50]="vatState() === 'neutro'">
+              <div class="flex items-start justify-between gap-2">
+                <p class="text-xs font-bold uppercase tracking-widest"
+                   [class.text-amber-700]="vatState() === 'pagar'"
+                   [class.text-blue-700]="vatState() === 'compensar'"
+                   [class.text-slate-400]="vatState() === 'neutro'">Balance IVA</p>
+                @if (vatState() === 'pagar') {
+                  <span class="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800 whitespace-nowrap">A pagar</span>
+                } @else if (vatState() === 'compensar') {
+                  <span class="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-800 whitespace-nowrap">A compensar</span>
+                } @else {
+                  <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 whitespace-nowrap">Neutro</span>
+                }
+              </div>
+              <p class="mt-2 text-3xl font-black"
+                 [class.text-amber-700]="vatState() === 'pagar'"
+                 [class.text-blue-700]="vatState() === 'compensar'"
+                 [class.text-slate-700]="vatState() === 'neutro'">
+                {{ absNumber(data.vat_balance) | number:'1.2-2' }} €
+              </p>
+              <p class="mt-1 text-xs"
+                 [class.text-amber-600]="vatState() === 'pagar'"
+                 [class.text-blue-600]="vatState() === 'compensar'"
+                 [class.text-slate-400]="vatState() === 'neutro'">
+                @if (vatState() === 'pagar') { IVA estimado a ingresar en Hacienda }
+                @else if (vatState() === 'compensar') { Saldo pendiente de compensar con Hacienda }
+                @else { Sin diferencia entre IVA cobrado y pagado }
+              </p>
+            </div>
           </div>
         </div>
 
+        <!-- Sección IRPF -->
+        <div>
+          <p class="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400">IRPF · Retenciones acumuladas</p>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+            <!-- IRPF Ventas M.111 -->
+            <div class="rounded-3xl border border-indigo-100 bg-indigo-50/40 p-6 shadow-sm">
+              <p class="text-xs font-bold text-indigo-700 uppercase tracking-widest">Retenciones Ventas · M.111</p>
+              <p class="mt-2 text-3xl font-black text-indigo-700">{{ toNumber(data.retention_sales) | number:'1.2-2' }} €</p>
+              <p class="mt-1 text-xs text-indigo-500">IRPF retenido por clientes en tus facturas de servicios</p>
+            </div>
+
+            <!-- IRPF Alquiler M.115 -->
+            <div class="rounded-3xl border border-violet-100 bg-violet-50/40 p-6 shadow-sm">
+              <p class="text-xs font-bold text-violet-700 uppercase tracking-widest">Retenciones Alquiler · M.115</p>
+              <p class="mt-2 text-3xl font-black text-violet-700">{{ toNumber(data.retention_rent) | number:'1.2-2' }} €</p>
+              <p class="mt-1 text-xs text-violet-500">IRPF retenido en facturas de arrendamiento de local</p>
+            </div>
+
+            <!-- Total Retenciones -->
+            <div class="rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
+              <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Total Retenciones</p>
+              <p class="mt-2 text-3xl font-black text-slate-800">{{ totalRetentions() | number:'1.2-2' }} €</p>
+              <p class="mt-1 text-xs text-slate-400">Ya retenido: no tendrás que pagarlo tú directamente</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gráfico evolución IVA mensual -->
         <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-8 shadow-sm">
           <h3 class="text-lg font-bold text-slate-900">Evolución IVA Mensual</h3>
+          <p class="text-sm text-slate-500 mt-1 mb-4">Comparativa de IVA repercutido vs. soportado por mes.</p>
           <div class="h-64 sm:h-80 w-full mt-4">
             <app-chart
               type="line"
               [data]="taxFlowChart()"
               [options]="{ maintainAspectRatio: false }"
             ></app-chart>
+          </div>
+        </div>
+
+        <!-- Nota informativa -->
+        <div class="rounded-2xl border border-amber-100 bg-amber-50/40 p-5 flex gap-3">
+          <div class="flex-shrink-0 text-amber-600 mt-0.5">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs font-bold text-amber-900">Estas cifras son estimadas</p>
+            <p class="text-xs text-amber-700 mt-0.5">Los importes reflejan los documentos procesados hasta la fecha. Las liquidaciones definitivas pueden variar según ajustes contables, deducciones o correcciones de facturas.</p>
           </div>
         </div>
       </div>

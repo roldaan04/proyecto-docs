@@ -15,6 +15,13 @@ class Settings(BaseSettings):
     SUPABASE_URL: str | None = None
     SUPABASE_KEY: str | None = None
 
+    # OpenAI Configuration
+    OPENAI_API_KEY: str | None = None
+
+    # Google AI Studio Configuration
+    GOOGLE_AI_KEY: str | None = None
+    GOOGLE_AI_MODEL: str = "gemini-2.5-flash"
+
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     ALGORITHM: str = "HS256"
 

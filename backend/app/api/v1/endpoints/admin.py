@@ -5,8 +5,10 @@ from uuid import UUID
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
+from app.models.tenant import Tenant
 from app.models.user import User
 from app.schemas.user import UserResponse
+from app.services.financial_entry_service import FinancialEntryService
 
 router = APIRouter()
 
@@ -64,10 +66,29 @@ def delete_user(
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     if user.id == current_superuser.id:
         raise HTTPException(status_code=400, detail="Superuser cannot delete themselves")
 
     db.delete(user)
     db.commit()
     return None
+
+
+@router.post("/resync-financial-entries/{tenant_id}")
+def resync_financial_entries(
+    tenant_id: UUID,
+    db: Session = Depends(get_db),
+    current_superuser: User = Depends(get_current_superuser),
+) -> dict:
+    """
+    Re-sincroniza los registros financieros históricos de un tenant aplicando
+    la lógica corregida (categorías en español, IRPF, needs_review) sobre los
+    datos ya extraídos, sin volver a llamar a la IA.
+    """
+    tenant = db.query(Tenant).filter(Tenant.id == tenant_id).first()
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant no encontrado")
+
+    result = FinancialEntryService.resync_from_extraction_runs(db, tenant_id)
+    return {"tenant_id": str(tenant_id), **result}

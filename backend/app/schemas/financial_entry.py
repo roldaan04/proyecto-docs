@@ -19,6 +19,7 @@ class FinancialEntryResponse(BaseModel):
     currency: str
     category: str | None
     status_review: str
+    needs_review: bool
     notes: str | None
     created_at: datetime
     updated_at: datetime

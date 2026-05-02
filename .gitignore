@@ -20,6 +20,8 @@ venv/
 .env
 .env.*
 *.env
+backend/.env
+frontend/.env
 
 # Alembic
 alembic/versions/__pycache__/

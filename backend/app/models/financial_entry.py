@@ -48,6 +48,7 @@ class FinancialEntry(Base):
     category: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
 
     status_review: Mapped[str] = mapped_column(String(50), nullable=False, default="pending", index=True)
+    needs_review: Mapped[bool] = mapped_column(nullable=False, default=False, index=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False, index=True)
