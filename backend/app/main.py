@@ -21,6 +21,7 @@ app.add_middleware(
         "https://tuadministrativo.com",
         "https://controladmin.tuadministrativo.com",
         "https://control-admin.onrender.com",
+        "https://proyecto-docs-1.onrender.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],
