@@ -17,6 +17,9 @@ export class FinancialMovementsPageComponent {
   private readonly toast = inject(ToastService);
 
   readonly exporting = signal(false);
+  readonly savingEdit = signal(false);
+  readonly editingMovement = signal<FinancialMovement | null>(null);
+  readonly editForm = signal<Partial<FinancialMovement>>({});
 
   readonly movements = signal<FinancialMovement[]>([]);
   readonly loading = signal(true);
@@ -170,6 +173,54 @@ export class FinancialMovementsPageComponent {
       default:
         return source || '—';
     }
+  }
+
+  openEdit(movement: FinancialMovement): void {
+    this.editingMovement.set(movement);
+    this.editForm.set({
+      movement_date: movement.movement_date,
+      kind: movement.kind,
+      status: movement.status,
+      third_party_name: movement.third_party_name,
+      third_party_tax_id: movement.third_party_tax_id,
+      concept: movement.concept,
+      category: movement.category,
+      subcategory: movement.subcategory,
+      business_area: movement.business_area,
+      net_amount: movement.net_amount,
+      tax_amount: movement.tax_amount,
+      total_amount: movement.total_amount,
+      notes: movement.notes,
+      needs_review: movement.needs_review,
+    });
+  }
+
+  closeEdit(): void {
+    this.editingMovement.set(null);
+    this.editForm.set({});
+  }
+
+  updateEditField<K extends keyof FinancialMovement>(key: K, value: FinancialMovement[K]): void {
+    this.editForm.set({ ...this.editForm(), [key]: value });
+  }
+
+  saveEdit(): void {
+    const movement = this.editingMovement();
+    if (!movement) return;
+
+    this.savingEdit.set(true);
+    this.financialMovementService.updateFinancialMovement(movement.id, this.editForm()).subscribe({
+      next: (updated) => {
+        this.movements.update((list) => list.map((m) => (m.id === updated.id ? updated : m)));
+        this.toast.show('Movimiento actualizado correctamente.', 'success');
+        this.closeEdit();
+        this.savingEdit.set(false);
+      },
+      error: (err) => {
+        this.toast.show(err?.error?.detail || 'No se pudo guardar el movimiento.', 'error');
+        this.savingEdit.set(false);
+      },
+    });
   }
 
   markAsReviewed(movement: FinancialMovement): void {

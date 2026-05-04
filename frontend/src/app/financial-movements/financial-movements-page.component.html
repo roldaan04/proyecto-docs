@@ -298,6 +298,15 @@
                         </button>
                       }
                       <button
+                        (click)="openEdit(movement)"
+                        class="rounded-lg bg-blue-50 p-1.5 text-blue-600 hover:bg-blue-100 transition-colors"
+                        title="Editar"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button
                         (click)="deleteMovement(movement.id)"
                         class="rounded-lg bg-red-50 p-1.5 text-red-600 hover:bg-red-100 transition-colors"
                         title="Archivar"
@@ -317,3 +326,230 @@
     </div>
   }
 </div>
+
+<!-- Panel lateral de edición -->
+@if (editingMovement()) {
+  <!-- Overlay -->
+  <div
+    class="fixed inset-0 z-40 bg-black/30"
+    (click)="closeEdit()"
+  ></div>
+
+  <!-- Drawer -->
+  <div class="fixed inset-y-0 right-0 z-50 flex w-full max-w-lg flex-col bg-white shadow-2xl">
+    <div class="flex items-center justify-between border-b border-[var(--border-color)] px-5 py-4">
+      <div>
+        <h2 class="text-lg font-semibold">Editar movimiento</h2>
+        <p class="text-sm text-[var(--dark-gray-color)]">{{ editingMovement()?.concept || editingMovement()?.third_party_name || 'Sin concepto' }}</p>
+      </div>
+      <button
+        type="button"
+        class="rounded-lg border border-[var(--border-color)] px-3 py-2 text-sm hover:bg-[var(--muted-hover-color)]"
+        (click)="closeEdit()"
+      >
+        ✕
+      </button>
+    </div>
+
+    <div class="flex-1 overflow-y-auto px-5 py-5 space-y-4">
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="mb-1 block text-sm font-medium">Fecha</label>
+          <input
+            type="date"
+            class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
+            [ngModel]="editForm().movement_date"
+            (ngModelChange)="updateEditField('movement_date', $event || null)"
+          />
+        </div>
+
+        <div>
+          <label class="mb-1 block text-sm font-medium">Tipo</label>
+          <select
+            class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
+            [ngModel]="editForm().kind"
+            (ngModelChange)="updateEditField('kind', $event)"
+          >
+            <option value="income">Ingreso</option>
+            <option value="expense">Gasto</option>
+            <option value="tax">Impuesto</option>
+            <option value="payroll">Nómina</option>
+            <option value="social_security">Seguridad social</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="mb-1 block text-sm font-medium">Estado</label>
+          <select
+            class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
+            [ngModel]="editForm().status"
+            (ngModelChange)="updateEditField('status', $event)"
+          >
+            <option value="draft">Borrador</option>
+            <option value="proposed">Propuesto</option>
+            <option value="confirmed">Confirmado</option>
+            <option value="reconciled">Conciliado</option>
+            <option value="archived">Archivado</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="mb-1 block text-sm font-medium">Moneda</label>
+          <input
+            type="text"
+            class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
+            [ngModel]="editForm().currency"
+            (ngModelChange)="updateEditField('currency', $event)"
+            placeholder="EUR"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label class="mb-1 block text-sm font-medium">Tercero</label>
+        <input
+          type="text"
+          class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
+          [ngModel]="editForm().third_party_name"
+          (ngModelChange)="updateEditField('third_party_name', $event || null)"
+          placeholder="Nombre del proveedor o cliente"
+        />
+      </div>
+
+      <div>
+        <label class="mb-1 block text-sm font-medium">NIF/CIF tercero</label>
+        <input
+          type="text"
+          class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
+          [ngModel]="editForm().third_party_tax_id"
+          (ngModelChange)="updateEditField('third_party_tax_id', $event || null)"
+          placeholder="Opcional"
+        />
+      </div>
+
+      <div>
+        <label class="mb-1 block text-sm font-medium">Concepto</label>
+        <input
+          type="text"
+          class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
+          [ngModel]="editForm().concept"
+          (ngModelChange)="updateEditField('concept', $event || null)"
+          placeholder="Descripción del movimiento"
+        />
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="mb-1 block text-sm font-medium">Categoría</label>
+          <input
+            type="text"
+            class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
+            [ngModel]="editForm().category"
+            (ngModelChange)="updateEditField('category', $event || null)"
+            placeholder="Opcional"
+          />
+        </div>
+
+        <div>
+          <label class="mb-1 block text-sm font-medium">Subcategoría</label>
+          <input
+            type="text"
+            class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
+            [ngModel]="editForm().subcategory"
+            (ngModelChange)="updateEditField('subcategory', $event || null)"
+            placeholder="Opcional"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label class="mb-1 block text-sm font-medium">Área de negocio</label>
+        <input
+          type="text"
+          class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
+          [ngModel]="editForm().business_area"
+          (ngModelChange)="updateEditField('business_area', $event || null)"
+          placeholder="Ej. administración"
+        />
+      </div>
+
+      <div class="grid grid-cols-3 gap-4">
+        <div>
+          <label class="mb-1 block text-sm font-medium">Base (€)</label>
+          <input
+            type="number"
+            step="0.01"
+            class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
+            [ngModel]="editForm().net_amount"
+            (ngModelChange)="updateEditField('net_amount', $event === '' ? null : $event)"
+          />
+        </div>
+
+        <div>
+          <label class="mb-1 block text-sm font-medium">Impuestos (€)</label>
+          <input
+            type="number"
+            step="0.01"
+            class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
+            [ngModel]="editForm().tax_amount"
+            (ngModelChange)="updateEditField('tax_amount', $event === '' ? null : $event)"
+          />
+        </div>
+
+        <div>
+          <label class="mb-1 block text-sm font-medium">Total (€)</label>
+          <input
+            type="number"
+            step="0.01"
+            class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
+            [ngModel]="editForm().total_amount"
+            (ngModelChange)="updateEditField('total_amount', $event === '' ? null : $event)"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label class="mb-1 block text-sm font-medium">Notas</label>
+        <textarea
+          class="min-h-[80px] w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
+          [ngModel]="editForm().notes"
+          (ngModelChange)="updateEditField('notes', $event || null)"
+          placeholder="Observaciones internas"
+        ></textarea>
+      </div>
+
+      <div class="flex items-center gap-2 rounded-2xl bg-[var(--bg-gray-color)] px-3 py-3">
+        <input
+          id="editNeedsReview"
+          type="checkbox"
+          [ngModel]="editForm().needs_review"
+          (ngModelChange)="updateEditField('needs_review', !!$event)"
+        />
+        <label for="editNeedsReview" class="text-sm">Marcar para revisión</label>
+      </div>
+
+    </div>
+
+    <div class="border-t border-[var(--border-color)] px-5 py-4 flex gap-3 justify-end">
+      <button
+        type="button"
+        class="rounded-2xl border border-[var(--border-color)] px-5 py-2 text-sm hover:bg-[var(--muted-hover-color)]"
+        (click)="closeEdit()"
+        [disabled]="savingEdit()"
+      >
+        Cancelar
+      </button>
+      <button
+        type="button"
+        class="rounded-2xl bg-black px-5 py-2 text-sm font-medium text-white disabled:opacity-50"
+        (click)="saveEdit()"
+        [disabled]="savingEdit()"
+      >
+        {{ savingEdit() ? 'Guardando...' : 'Guardar cambios' }}
+      </button>
+    </div>
+  </div>
+}
