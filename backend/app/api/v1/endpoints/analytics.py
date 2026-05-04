@@ -4,6 +4,7 @@ from typing import Optional
 
 import openpyxl
 from openpyxl.styles import Alignment, Font, PatternFill
+from openpyxl.chart import BarChart, LineChart, PieChart, Reference
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
@@ -210,6 +211,100 @@ def export_dashboard(
         ws7.cell(row=r, column=1, value=row.get("category_name"))
         ws7.cell(row=r, column=2, value=float(row.get("total_amount") or 0))
     autofit(ws7)
+
+    # ── Gráficas ───────────────────────────────────────────────────────────────
+
+    # Hoja 1: Resumen — gráfico de barras con los 3 KPIs principales
+    ch1 = BarChart()
+    ch1.type = "col"
+    ch1.title = "Resumen Financiero"
+    ch1.y_axis.title = "€"
+    ch1.style = 10
+    ch1.width = 18
+    ch1.height = 12
+    ch1.add_data(Reference(ws, min_col=2, min_row=1, max_row=4), titles_from_data=True)
+    ch1.set_categories(Reference(ws, min_col=1, min_row=2, max_row=4))
+    ws.add_chart(ch1, "D2")
+
+    # Hoja 2: Flujo mensual — barras agrupadas Ingresos / Gastos / Beneficio
+    n_monthly = len(monthly)
+    if n_monthly > 0:
+        ch2 = BarChart()
+        ch2.type = "col"
+        ch2.grouping = "clustered"
+        ch2.title = "Flujo Mensual de Caja"
+        ch2.y_axis.title = "€"
+        ch2.style = 10
+        ch2.width = 22
+        ch2.height = 14
+        ch2.add_data(Reference(ws2, min_col=2, max_col=4, min_row=1, max_row=n_monthly + 1), titles_from_data=True)
+        ch2.set_categories(Reference(ws2, min_col=1, min_row=2, max_row=n_monthly + 1))
+        ws2.add_chart(ch2, "F2")
+
+    # Hoja 3: IVA mensual — líneas IVA Repercutido / Soportado / Balance
+    n_tax = len(tax)
+    if n_tax > 0:
+        ch3 = LineChart()
+        ch3.title = "Evolución IVA Mensual"
+        ch3.y_axis.title = "€"
+        ch3.style = 10
+        ch3.width = 22
+        ch3.height = 14
+        ch3.add_data(Reference(ws3, min_col=2, max_col=4, min_row=1, max_row=n_tax + 1), titles_from_data=True)
+        ch3.set_categories(Reference(ws3, min_col=1, min_row=2, max_row=n_tax + 1))
+        ws3.add_chart(ch3, "F2")
+
+    # Hoja 4: Top Proveedores — barras horizontales
+    n_sup = len(suppliers)
+    if n_sup > 0:
+        ch4 = BarChart()
+        ch4.type = "bar"
+        ch4.title = "Top Proveedores por Importe"
+        ch4.x_axis.title = "€"
+        ch4.style = 10
+        ch4.width = 20
+        ch4.height = max(10, n_sup * 1.2)
+        ch4.add_data(Reference(ws4, min_col=2, min_row=1, max_row=n_sup + 1), titles_from_data=True)
+        ch4.set_categories(Reference(ws4, min_col=1, min_row=2, max_row=n_sup + 1))
+        ws4.add_chart(ch4, "D2")
+
+    # Hoja 5: Top Clientes — barras horizontales
+    n_cus = len(customers)
+    if n_cus > 0:
+        ch5 = BarChart()
+        ch5.type = "bar"
+        ch5.title = "Top Clientes por Importe"
+        ch5.x_axis.title = "€"
+        ch5.style = 10
+        ch5.width = 20
+        ch5.height = max(10, n_cus * 1.2)
+        ch5.add_data(Reference(ws5, min_col=2, min_row=1, max_row=n_cus + 1), titles_from_data=True)
+        ch5.set_categories(Reference(ws5, min_col=1, min_row=2, max_row=n_cus + 1))
+        ws5.add_chart(ch5, "D2")
+
+    # Hoja 6: Gastos por categoría — tarta
+    n_exp = len(exp_cat)
+    if n_exp > 0:
+        ch6 = PieChart()
+        ch6.title = "Gastos por Categoría"
+        ch6.style = 10
+        ch6.width = 18
+        ch6.height = 14
+        ch6.add_data(Reference(ws6, min_col=2, min_row=1, max_row=n_exp + 1), titles_from_data=True)
+        ch6.set_categories(Reference(ws6, min_col=1, min_row=2, max_row=n_exp + 1))
+        ws6.add_chart(ch6, "D2")
+
+    # Hoja 7: Ingresos por categoría — tarta
+    n_inc = len(inc_cat)
+    if n_inc > 0:
+        ch7 = PieChart()
+        ch7.title = "Ingresos por Categoría"
+        ch7.style = 10
+        ch7.width = 18
+        ch7.height = 14
+        ch7.add_data(Reference(ws7, min_col=2, min_row=1, max_row=n_inc + 1), titles_from_data=True)
+        ch7.set_categories(Reference(ws7, min_col=1, min_row=2, max_row=n_inc + 1))
+        ws7.add_chart(ch7, "D2")
 
     buffer = io.BytesIO()
     wb.save(buffer)
