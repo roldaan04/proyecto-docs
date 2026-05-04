@@ -135,15 +135,16 @@ def export_dashboard(
     ws = wb.active
     ws.title = "Resumen"
     kpi_pairs = [
-        ("Total ingresos (€)", overview.total_income),
-        ("Total gastos (€)", overview.total_expenses),
-        ("Beneficio neto (€)", overview.net_profit),
-        ("IVA repercutido (€)", overview.vat_charged),
-        ("IVA soportado (€)", overview.vat_deductible),
-        ("Balance IVA (€)", overview.vat_balance),
-        ("Retenciones recibidas (€)", overview.retention_sales),
-        ("Retenciones pagadas renta (€)", overview.retention_rent),
-        ("Tasa de quema mensual (€)", overview.burn_rate),
+        ("Total ingresos (€)", overview.get("total_income")),
+        ("Total gastos (€)", overview.get("total_expenses")),
+        ("Beneficio neto (€)", overview.get("net_profit")),
+        ("IVA repercutido (€)", overview.get("vat_charged")),
+        ("IVA soportado (€)", overview.get("vat_supported")),
+        ("Balance IVA (€)", overview.get("vat_balance")),
+        ("Retenciones recibidas (€)", overview.get("retention_sales")),
+        ("Retenciones pagadas renta (€)", overview.get("retention_rent")),
+        ("Gasto fijo mensual (€)", overview.get("fixed_burn_rate")),
+        ("Gasto variable mensual (€)", overview.get("variable_burn_rate")),
     ]
     ws.cell(row=1, column=1, value="KPI").fill = header_fill
     ws.cell(row=1, column=1).font = header_font
@@ -158,56 +159,56 @@ def export_dashboard(
     ws2 = wb.create_sheet("Flujo mensual")
     style_header_row(ws2, ["Mes", "Ingresos (€)", "Gastos (€)", "Beneficio (€)"])
     for r, row in enumerate(monthly, 2):
-        ws2.cell(row=r, column=1, value=row.month)
-        ws2.cell(row=r, column=2, value=float(row.income or 0))
-        ws2.cell(row=r, column=3, value=float(row.expenses or 0))
-        ws2.cell(row=r, column=4, value=float(row.income or 0) - float(row.expenses or 0))
+        inc = float(row.get("income") or 0)
+        exp = float(row.get("expenses") or 0)
+        ws2.cell(row=r, column=1, value=row.get("month"))
+        ws2.cell(row=r, column=2, value=inc)
+        ws2.cell(row=r, column=3, value=exp)
+        ws2.cell(row=r, column=4, value=inc - exp)
     autofit(ws2)
 
     # ── Hoja 3: IVA mensual ────────────────────────────────────────────────────
     ws3 = wb.create_sheet("IVA mensual")
     style_header_row(ws3, ["Mes", "IVA Repercutido (€)", "IVA Soportado (€)", "Balance IVA (€)"])
     for r, row in enumerate(tax, 2):
-        ws3.cell(row=r, column=1, value=row.month)
-        ws3.cell(row=r, column=2, value=float(row.vat_charged or 0))
-        ws3.cell(row=r, column=3, value=float(row.vat_supported or 0))
-        ws3.cell(row=r, column=4, value=float(row.vat_charged or 0) - float(row.vat_supported or 0))
+        charged = float(row.get("vat_charged") or 0)
+        supported = float(row.get("vat_supported") or 0)
+        ws3.cell(row=r, column=1, value=row.get("month"))
+        ws3.cell(row=r, column=2, value=charged)
+        ws3.cell(row=r, column=3, value=supported)
+        ws3.cell(row=r, column=4, value=charged - supported)
     autofit(ws3)
 
     # ── Hoja 4: Top proveedores ────────────────────────────────────────────────
     ws4 = wb.create_sheet("Top Proveedores")
-    style_header_row(ws4, ["Proveedor", "Total (€)", "Nº movimientos"])
+    style_header_row(ws4, ["Proveedor", "Total (€)"])
     for r, row in enumerate(suppliers, 2):
-        ws4.cell(row=r, column=1, value=row.name)
-        ws4.cell(row=r, column=2, value=float(row.amount or 0))
-        ws4.cell(row=r, column=3, value=row.count)
+        ws4.cell(row=r, column=1, value=row.get("name"))
+        ws4.cell(row=r, column=2, value=float(row.get("amount") or 0))
     autofit(ws4)
 
     # ── Hoja 5: Top clientes ───────────────────────────────────────────────────
     ws5 = wb.create_sheet("Top Clientes")
-    style_header_row(ws5, ["Cliente", "Total (€)", "Nº movimientos"])
+    style_header_row(ws5, ["Cliente", "Total (€)"])
     for r, row in enumerate(customers, 2):
-        ws5.cell(row=r, column=1, value=row.name)
-        ws5.cell(row=r, column=2, value=float(row.amount or 0))
-        ws5.cell(row=r, column=3, value=row.count)
+        ws5.cell(row=r, column=1, value=row.get("name"))
+        ws5.cell(row=r, column=2, value=float(row.get("amount") or 0))
     autofit(ws5)
 
     # ── Hoja 6: Gastos por categoría ───────────────────────────────────────────
     ws6 = wb.create_sheet("Gastos por categoría")
-    style_header_row(ws6, ["Categoría", "Total (€)", "Nº movimientos"])
+    style_header_row(ws6, ["Categoría", "Total (€)"])
     for r, row in enumerate(exp_cat, 2):
-        ws6.cell(row=r, column=1, value=row.category_name)
-        ws6.cell(row=r, column=2, value=float(row.total_amount or 0))
-        ws6.cell(row=r, column=3, value=row.count)
+        ws6.cell(row=r, column=1, value=row.get("category_name"))
+        ws6.cell(row=r, column=2, value=float(row.get("total_amount") or 0))
     autofit(ws6)
 
     # ── Hoja 7: Ingresos por categoría ────────────────────────────────────────
     ws7 = wb.create_sheet("Ingresos por categoría")
-    style_header_row(ws7, ["Categoría", "Total (€)", "Nº movimientos"])
+    style_header_row(ws7, ["Categoría", "Total (€)"])
     for r, row in enumerate(inc_cat, 2):
-        ws7.cell(row=r, column=1, value=row.category_name)
-        ws7.cell(row=r, column=2, value=float(row.total_amount or 0))
-        ws7.cell(row=r, column=3, value=row.count)
+        ws7.cell(row=r, column=1, value=row.get("category_name"))
+        ws7.cell(row=r, column=2, value=float(row.get("total_amount") or 0))
     autofit(ws7)
 
     buffer = io.BytesIO()
