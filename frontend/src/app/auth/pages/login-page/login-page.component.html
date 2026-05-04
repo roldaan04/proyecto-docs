@@ -121,13 +121,19 @@
     </form>
   </div>
 
-  <p class="mt-6 text-center text-sm leading-relaxed sm:mt-8 lg:mt-10 lg:text-base"
-     style="color: var(--dark-gray-color);">
-    ¿No tienes cuenta?
-    <a routerLink="/auth/register"
-       class="ml-1 font-semibold"
-       style="color: var(--primary-color);">
-      Regístrate
+  <div class="mt-6 flex flex-col items-center gap-2 sm:mt-8 lg:mt-10">
+    <a
+      routerLink="/auth/forgot-password"
+      class="text-sm leading-relaxed"
+      style="color: var(--dark-gray-color);"
+    >
+      ¿Olvidaste tu contraseña?
     </a>
-  </p>
+    <p class="text-center text-sm leading-relaxed" style="color: var(--dark-gray-color);">
+      ¿No tienes cuenta?
+      <a routerLink="/auth/register" class="ml-1 font-semibold" style="color: var(--primary-color);">
+        Regístrate
+      </a>
+    </p>
+  </div>
 </div>

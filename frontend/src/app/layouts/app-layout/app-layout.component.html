@@ -120,6 +120,16 @@
             </a>
           </div>
         }
+
+        <a
+          routerLink="/help"
+          routerLinkActive="bg-[var(--blue-selected)]"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="rounded-full px-6 py-4 text-sm font-medium transition-colors hover:bg-[var(--muted-hover-color)]"
+          (click)="closeMobileMenu()"
+        >
+          ❓ Ayuda
+        </a>
       </nav>
 
       <button
@@ -132,6 +142,7 @@
     </aside>
 
     <!-- Sidebar escritorio -->
+
     <aside class="hidden w-72 shrink-0 flex-col border-r border-[var(--border-color)] bg-[var(--sidebar-color)] p-6 lg:flex">
       <div class="mb-8 flex items-start gap-3">
         <img src="favicon.ico" class="h-10 w-10 rounded-[2.5rem] shadow-sm border border-[var(--border-color)] p-2 bg-white" alt="Logo">
@@ -257,6 +268,19 @@
         </div>
       }
 
+      <div class="mb-4">
+        <nav class="flex flex-col gap-2">
+          <a
+            routerLink="/help"
+            routerLinkActive="bg-[var(--blue-selected)]"
+            [routerLinkActiveOptions]="{ exact: true }"
+            class="rounded-full px-6 py-4 text-sm font-medium transition-colors hover:bg-[var(--muted-hover-color)]"
+          >
+            ❓ Ayuda
+          </a>
+        </nav>
+      </div>
+
       <button
         type="button"
         class="mt-auto rounded-[3rem] bg-[var(--secondary-color)] px-8 py-5 text-sm font-semibold text-[var(--text-opposite-color)] transition-opacity hover:opacity-90"
@@ -290,13 +314,28 @@
             </div>
           </div>
 
-          <div class="min-w-0 lg:max-w-[40%]">
-            <p class="text-xs font-medium uppercase tracking-wide text-[var(--dark-gray-color)] sm:text-sm lg:text-right">
-              Empresa
-            </p>
-            <p class="mt-1 break-words text-base font-semibold sm:text-lg lg:text-right">
-              {{ activeTenant()?.tenant_name || 'No seleccionada' }}
-            </p>
+          <div class="flex items-center gap-3">
+            <!-- Buscador rápido -->
+            <button
+              type="button"
+              (click)="palette.show()"
+              class="hidden items-center gap-2 rounded-xl border border-[var(--border-color)] px-3 py-2 text-sm text-[var(--dark-gray-color)] hover:bg-[var(--muted-hover-color)] transition-colors sm:flex"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+              <span>Buscar</span>
+              <kbd class="rounded border border-[var(--border-color)] px-1 py-0.5 text-[10px]">⌘K</kbd>
+            </button>
+
+            <div class="min-w-0">
+              <p class="text-xs font-medium uppercase tracking-wide text-[var(--dark-gray-color)] sm:text-sm lg:text-right">
+                Empresa
+              </p>
+              <p class="mt-1 break-words text-base font-semibold sm:text-lg lg:text-right">
+                {{ activeTenant()?.tenant_name || 'No seleccionada' }}
+              </p>
+            </div>
           </div>
         </div>
       </header>
@@ -309,3 +348,5 @@
     </main>
   </div>
 </div>
+
+<app-command-palette #palette />

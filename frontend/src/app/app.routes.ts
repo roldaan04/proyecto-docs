@@ -16,6 +16,7 @@ import { adminGuard } from './core/guards/admin.guard';
 import { UserManagementComponent } from './features/admin/pages/user-management/user-management.component';
 import { MembersPageComponent } from './features/members/members-page.component';
 import { AcceptInvitationPageComponent } from './features/members/accept-invitation-page.component';
+import { HelpPageComponent } from './help/help-page.component';
 
 
 export const routes: Routes = [
@@ -95,6 +96,11 @@ export const routes: Routes = [
         path: 'members',
         component: MembersPageComponent,
         title: 'Equipo | Control Admin',
+      },
+      {
+        path: 'help',
+        component: HelpPageComponent,
+        title: 'Ayuda | Control Admin',
       },
       {
         path: '',

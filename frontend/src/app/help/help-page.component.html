@@ -1,0 +1,62 @@
+<div class="space-y-5 sm:space-y-6">
+  <!-- Header -->
+  <div class="rounded-2xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-4 shadow-sm sm:p-5">
+    <p class="text-xs font-medium uppercase tracking-[0.18em] text-[var(--dark-gray-color)]">Soporte</p>
+    <h1 class="mt-2 text-2xl font-semibold sm:text-3xl">Centro de ayuda</h1>
+    <p class="mt-2 text-sm text-[var(--dark-gray-color)]">
+      Todo lo que necesitas saber para sacar el máximo partido a Control Admin.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 gap-5 lg:grid-cols-4 sm:gap-6">
+    <!-- Sidebar de secciones -->
+    <div class="rounded-2xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-3 shadow-sm sm:p-4 lg:col-span-1">
+      <nav class="flex flex-row flex-wrap gap-1 lg:flex-col">
+        @for (section of sections; track section.id) {
+          <button
+            type="button"
+            (click)="setSection(section.id)"
+            class="flex items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors hover:bg-[var(--muted-hover-color)]"
+            [class.bg-[var(--blue-selected)]]="activeSection() === section.id"
+          >
+            <span>{{ section.icon }}</span>
+            <span>{{ section.title }}</span>
+          </button>
+        }
+      </nav>
+    </div>
+
+    <!-- Contenido FAQ -->
+    <div class="rounded-2xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-4 shadow-sm sm:p-5 lg:col-span-3">
+      @if (currentSection(); as section) {
+        <h2 class="mb-4 text-xl font-semibold">
+          <span class="mr-2">{{ section.icon }}</span>{{ section.title }}
+        </h2>
+
+        <div class="space-y-2">
+          @for (item of section.items; track item.question) {
+            <div class="overflow-hidden rounded-2xl border border-[var(--border-color)]">
+              <button
+                type="button"
+                (click)="toggleItem(itemKey(section.id, item.question))"
+                class="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left text-sm font-medium hover:bg-[var(--muted-hover-color)] transition-colors"
+              >
+                <span>{{ item.question }}</span>
+                <span class="shrink-0 text-[var(--dark-gray-color)] text-xs transition-transform duration-200"
+                      [class.rotate-180]="isOpen(itemKey(section.id, item.question))">
+                  ▼
+                </span>
+              </button>
+
+              @if (isOpen(itemKey(section.id, item.question))) {
+                <div class="border-t border-[var(--border-color)] bg-[var(--bg-gray-color)] px-4 py-3.5 text-sm leading-relaxed text-[var(--dark-gray-color)]">
+                  {{ item.answer }}
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</div>

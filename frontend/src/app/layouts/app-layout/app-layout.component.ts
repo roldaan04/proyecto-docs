@@ -2,11 +2,12 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthStateService } from '../../core/services/auth-state.service';
 import { TenantStateService } from '../../core/services/tenant-state.service';
+import { CommandPaletteComponent } from '../../components/command-palette/command-palette.component';
 
 @Component({
   selector: 'app-app-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommandPaletteComponent],
   templateUrl: './app-layout.component.html',
 })
 export class AppLayoutComponent {
