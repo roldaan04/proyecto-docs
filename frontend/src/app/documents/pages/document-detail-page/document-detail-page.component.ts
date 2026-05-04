@@ -138,10 +138,13 @@ export class DocumentDetailPageComponent implements OnDestroy {
             );
             if (done) {
               this.stopPolling();
-              this.toast.show('Procesamiento completado.', 'success');
-              // Reload document to get updated processing_status
+              this.toast.show('Procesamiento completado. Revisa los registros extraídos.', 'success');
+              // Reload document then redirect to financial entries
               this.documentsService.getById(id).subscribe({
-                next: (doc) => this.document.set(doc),
+                next: (doc) => {
+                  this.document.set(doc);
+                  this.router.navigateByUrl('/financial-entries');
+                },
               });
             }
           },
