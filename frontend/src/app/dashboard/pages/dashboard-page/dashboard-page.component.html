@@ -169,7 +169,7 @@
 
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <!-- Burn Rate Widget -->
-          <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-8 shadow-sm">
+          <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-5 sm:p-8 shadow-sm">
             <h3 class="text-lg font-bold text-slate-900">Estructura de Gasto (Burn Rate)</h3>
             <p class="text-sm text-slate-500 mt-1 mb-6">Distribución entre gastos fijos y variables.</p>
 
@@ -204,7 +204,7 @@
           </div>
 
           <!-- Tax Forecast Widget -->
-          <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-8 shadow-sm">
+          <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-5 sm:p-8 shadow-sm">
             <h3 class="text-lg font-bold text-slate-900">Previsión de Impuestos</h3>
             <p class="text-sm text-slate-500 mt-1 mb-6">Dinero a reservar para próximas liquidaciones.</p>
 
@@ -237,7 +237,7 @@
           </div>
         </div>
 
-        <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-8 shadow-sm">
+        <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-5 sm:p-8 shadow-sm">
           <h3 class="text-lg font-bold text-slate-900 leading-none">Flujo de Caja Mensual</h3>
           <p class="text-sm text-slate-500 mt-1 mb-8">Evolución de ingresos y gastos consolidados.</p>
           
@@ -255,24 +255,24 @@
     <!-- 2. INCOME TAB -->
     @if (activeTab() === 'income') {
       <div class="animate-in slide-in-from-bottom-4 duration-500 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-8 shadow-sm">
+        <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-5 sm:p-8 shadow-sm">
           <h3 class="text-lg font-bold text-slate-900">Ventas por Categoría</h3>
-          <div class="h-64 sm:h-80 w-full">
+          <div class="h-64 sm:h-72 w-full mt-4">
             <app-chart
               type="doughnut"
               [data]="categoryIncomesChart()"
-              [options]="{ 
+              [options]="{
                 maintainAspectRatio: false,
                 plugins: {
-                  legend: { position: 'right' }
+                  legend: { position: 'bottom' }
                 }
               }"
             ></app-chart>
           </div>
         </div>
-        <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-8 shadow-sm">
+        <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-5 sm:p-8 shadow-sm">
           <h3 class="text-lg font-bold text-slate-900">Top Clientes</h3>
-          <div class="mt-8 space-y-4">
+          <div class="mt-6 space-y-4">
             @for (c of topCustomers(); track c.name; let i = $index) {
               <div class="flex items-center gap-4 rounded-2xl border border-slate-50 p-4 transition-colors hover:bg-slate-50">
                 <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 font-bold text-xs">{{ i+1 }}</span>
@@ -288,19 +288,19 @@
     <!-- 3. EXPENSES TAB -->
     @if (activeTab() === 'expenses') {
       <div class="animate-in slide-in-from-bottom-4 duration-500 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-8 shadow-sm lg:col-span-2">
+        <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-5 sm:p-8 shadow-sm lg:col-span-2">
           <div class="flex flex-col gap-8 lg:flex-row">
             <div class="flex-1">
               <h3 class="text-lg font-bold text-slate-900 leading-none">Gastos por Categoría</h3>
               <p class="text-sm text-slate-500 mt-1 mb-6">Distribución porcentual por partida presupuestaria.</p>
-              <div class="h-64 sm:h-80 w-full">
+              <div class="h-64 sm:h-72 w-full">
                 <app-chart
                   type="doughnut"
                   [data]="categoryExpensesChart()"
-                  [options]="{ 
+                  [options]="{
                     maintainAspectRatio: false,
                     plugins: {
-                      legend: { position: 'right' }
+                      legend: { position: 'bottom' }
                     }
                   }"
                 ></app-chart>
@@ -327,9 +327,9 @@
           </div>
         </div>
 
-        <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-8 shadow-sm">
+        <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-5 sm:p-8 shadow-sm">
           <h3 class="text-lg font-bold text-slate-900">Top Proveedores</h3>
-          <div class="mt-8 space-y-4">
+          <div class="mt-6 space-y-4">
             @for (s of topSuppliers(); track s.name; let i = $index) {
               <div class="flex items-center gap-4 rounded-2xl border border-slate-50 p-4 transition-colors hover:bg-slate-50">
                 <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 font-bold text-xs">{{ i+1 }}</span>
@@ -433,7 +433,7 @@
         </div>
 
         <!-- Gráfico evolución IVA mensual -->
-        <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-8 shadow-sm">
+        <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-5 sm:p-8 shadow-sm">
           <h3 class="text-lg font-bold text-slate-900">Evolución IVA Mensual</h3>
           <p class="text-sm text-slate-500 mt-1 mb-4">Comparativa de IVA repercutido vs. soportado por mes.</p>
           <div class="h-64 sm:h-80 w-full mt-4">
