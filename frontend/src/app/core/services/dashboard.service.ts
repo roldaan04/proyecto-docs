@@ -60,4 +60,11 @@ export class DashboardService {
   getTaxMonthlyFlow(period: PeriodParams = {}): Observable<TaxMonthlyFlowRow[]> {
     return this.http.get<TaxMonthlyFlowRow[]>(`${this.baseUrl}/tax-monthly-flow`, { params: buildParams(period) });
   }
+
+  exportDashboard(period: PeriodParams = {}): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/export`, {
+      params: buildParams(period),
+      responseType: 'blob',
+    });
+  }
 }

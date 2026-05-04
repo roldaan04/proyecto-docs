@@ -58,6 +58,7 @@ export class DashboardPageComponent {
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
+  readonly exporting = signal(false);
 
   readonly hasNegativeProfit = computed(() => {
     const data = this.summary();
@@ -220,6 +221,25 @@ export class DashboardPageComponent {
 
   constructor() {
     this.loadDashboard();
+  }
+
+  exportExcel(): void {
+    const period = this.buildPeriodParams(this.activePeriod());
+    this.exporting.set(true);
+    this.dashboardService.exportDashboard(period).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `dashboard_${this.activePeriod()}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting.set(false);
+      },
+      error: () => {
+        this.exporting.set(false);
+      },
+    });
   }
 
   setTab(tab: DashboardTab): void {

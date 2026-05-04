@@ -60,7 +60,7 @@
       </nav>
     </div>
 
-    <!-- Period Selector -->
+    <!-- Period Selector + Export -->
     <div class="relative border-t border-slate-100 pt-4 flex flex-wrap items-center gap-2">
       <span class="text-xs font-bold uppercase tracking-widest text-slate-400 mr-1">Periodo:</span>
       @for (opt of periodOptions; track opt.key) {
@@ -76,6 +76,13 @@
           {{ opt.label }}
         </button>
       }
+      <button
+        (click)="exportExcel()"
+        [disabled]="exporting() || loading()"
+        class="ml-auto flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-60 transition-colors"
+      >
+        {{ exporting() ? 'Exportando...' : '↓ Exportar Excel' }}
+      </button>
     </div>
   </div>
 
