@@ -1,237 +1,385 @@
-<div class="grid grid-cols-1 gap-5 xl:grid-cols-5">
-  <div class="xl:col-span-2">
-    <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-5 shadow-sm">
-      <div class="mb-5">
-        <p class="text-xs font-medium uppercase tracking-[0.18em] text-[var(--dark-gray-color)]">
-          Registro manual
-        </p>
-        <h1 class="mt-2 text-2xl font-semibold">Movimientos sin factura</h1>
-        <p class="mt-2 text-sm text-[var(--dark-gray-color)]">
-          Registra nóminas, impuestos, cuotas, ingresos o gastos manuales que no dependan de documentos.
-        </p>
-      </div>
+<div class="space-y-5">
 
-      @if (error()) {
-        <div class="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {{ error() }}
-        </div>
-      }
+  <!-- Header + tabs -->
+  <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-5 shadow-sm">
+    <p class="text-xs font-medium uppercase tracking-[0.18em] text-[var(--dark-gray-color)]">
+      Sin factura
+    </p>
+    <h1 class="mt-2 text-2xl font-semibold">Movimientos sin factura</h1>
+    <p class="mt-2 text-sm text-[var(--dark-gray-color)]">
+      Registra manualmente gastos e ingresos sin factura, o importa un Excel con múltiples registros.
+    </p>
 
-      @if (success()) {
-        <div class="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          {{ success() }}
-        </div>
-      }
-
-      <div class="grid grid-cols-1 gap-4">
-        <div>
-          <label class="mb-1 block text-sm font-medium">Fecha</label>
-          <input
-            class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
-            type="date"
-            [ngModel]="form().movement_date"
-            (ngModelChange)="updateForm('movement_date', $event)"
-          />
-        </div>
-
-        <div>
-          <label class="mb-1 block text-sm font-medium">Tipo movimiento</label>
-          <select
-            class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
-            [ngModel]="form().movement_type"
-            (ngModelChange)="updateForm('movement_type', $event)"
-          >
-            <option value="manual_expense">Gasto manual</option>
-            <option value="manual_income">Ingreso manual</option>
-            <option value="payroll">Nómina</option>
-            <option value="social_security">Seguridad social</option>
-            <option value="tax">Impuesto</option>
-            <option value="freelance_fee">Colaborador</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="mb-1 block text-sm font-medium">Tercero</label>
-          <input
-            class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
-            type="text"
-            [ngModel]="form().third_party_name"
-            (ngModelChange)="updateForm('third_party_name', $event)"
-            placeholder="Ej. Hacienda"
-          />
-        </div>
-
-        <div>
-          <label class="mb-1 block text-sm font-medium">NIF/CIF tercero</label>
-          <input
-            class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
-            type="text"
-            [ngModel]="form().third_party_tax_id"
-            (ngModelChange)="updateForm('third_party_tax_id', $event || null)"
-            placeholder="Opcional"
-          />
-        </div>
-
-        <div>
-          <label class="mb-1 block text-sm font-medium">Concepto</label>
-          <input
-            class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
-            type="text"
-            [ngModel]="form().concept"
-            (ngModelChange)="updateForm('concept', $event)"
-            placeholder="Ej. Cuota autónomos marzo"
-          />
-        </div>
-
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label class="mb-1 block text-sm font-medium">Categoría</label>
-            <input
-              class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
-              type="text"
-              [ngModel]="form().category"
-              (ngModelChange)="updateForm('category', $event || null)"
-              placeholder="Opcional"
-            />
-          </div>
-
-          <div>
-            <label class="mb-1 block text-sm font-medium">Subcategoría</label>
-            <input
-              class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
-              type="text"
-              [ngModel]="form().subcategory"
-              (ngModelChange)="updateForm('subcategory', $event || null)"
-              placeholder="Opcional"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label class="mb-1 block text-sm font-medium">Área negocio</label>
-          <input
-            class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
-            type="text"
-            [ngModel]="form().business_area"
-            (ngModelChange)="updateForm('business_area', $event || null)"
-            placeholder="Ej. fiscalidad"
-          />
-        </div>
-
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div>
-            <label class="mb-1 block text-sm font-medium">Base</label>
-            <input
-              class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
-              type="number"
-              step="0.01"
-              [ngModel]="form().net_amount"
-              (ngModelChange)="updateForm('net_amount', $event === '' ? null : +$event)"
-            />
-          </div>
-
-          <div>
-            <label class="mb-1 block text-sm font-medium">Impuestos</label>
-            <input
-              class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
-              type="number"
-              step="0.01"
-              [ngModel]="form().tax_amount"
-              (ngModelChange)="updateForm('tax_amount', $event === '' ? 0 : +$event)"
-            />
-          </div>
-
-          <div>
-            <label class="mb-1 block text-sm font-medium">Total</label>
-            <input
-              class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
-              type="number"
-              step="0.01"
-              [ngModel]="form().total_amount"
-              (ngModelChange)="updateForm('total_amount', +$event)"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label class="mb-1 block text-sm font-medium">Notas</label>
-          <textarea
-            class="min-h-[100px] w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
-            [ngModel]="form().notes"
-            (ngModelChange)="updateForm('notes', $event || null)"
-            placeholder="Observaciones internas"
-          ></textarea>
-        </div>
-
-        <div class="flex items-center gap-2 rounded-2xl bg-[var(--bg-gray-color)] px-3 py-3">
-          <input
-            id="needsReview"
-            type="checkbox"
-            [ngModel]="form().needs_review"
-            (ngModelChange)="updateForm('needs_review', !!$event)"
-          />
-          <label for="needsReview" class="text-sm">Marcar para revisión</label>
-        </div>
-
-        <button
-          class="rounded-2xl bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-          [disabled]="saving()"
-          (click)="submit()"
-        >
-          {{ saving() ? 'Guardando...' : 'Crear movimiento' }}
-        </button>
-      </div>
+    <!-- Tabs -->
+    <div class="mt-5 flex gap-2">
+      <button
+        (click)="setTab('manual')"
+        [class.bg-black]="activeTab() === 'manual'"
+        [class.text-white]="activeTab() === 'manual'"
+        [class.border-transparent]="activeTab() === 'manual'"
+        class="rounded-full border border-[var(--border-color)] px-5 py-2 text-sm font-medium transition-colors hover:bg-[var(--muted-hover-color)]"
+      >
+        Entrada manual
+      </button>
+      <button
+        (click)="setTab('import')"
+        [class.bg-black]="activeTab() === 'import'"
+        [class.text-white]="activeTab() === 'import'"
+        [class.border-transparent]="activeTab() === 'import'"
+        class="rounded-full border border-[var(--border-color)] px-5 py-2 text-sm font-medium transition-colors hover:bg-[var(--muted-hover-color)]"
+      >
+        Importar Excel
+      </button>
     </div>
   </div>
 
-  <div class="xl:col-span-3">
-    <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-5 shadow-sm">
-      <div class="mb-5">
-        <h2 class="text-lg font-semibold">Últimos movimientos sin factura</h2>
-        <p class="text-sm text-[var(--dark-gray-color)]">
-          Últimos movimientos creados manualmente en la empresa.
-        </p>
+  <!-- ===== TAB: ENTRADA MANUAL ===== -->
+  @if (activeTab() === 'manual') {
+    <div class="grid grid-cols-1 gap-5 xl:grid-cols-5">
+
+      <!-- Formulario -->
+      <div class="xl:col-span-2">
+        <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-5 shadow-sm">
+          <h2 class="mb-4 text-lg font-semibold">Nuevo movimiento</h2>
+
+          @if (error()) {
+            <div class="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {{ error() }}
+            </div>
+          }
+
+          @if (success()) {
+            <div class="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+              {{ success() }}
+            </div>
+          }
+
+          <div class="grid grid-cols-1 gap-4">
+            <div>
+              <label class="mb-1 block text-sm font-medium">Fecha</label>
+              <input
+                class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
+                type="date"
+                [ngModel]="form().movement_date"
+                (ngModelChange)="updateForm('movement_date', $event)"
+              />
+            </div>
+
+            <div>
+              <label class="mb-1 block text-sm font-medium">Tipo movimiento</label>
+              <select
+                class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
+                [ngModel]="form().movement_type"
+                (ngModelChange)="updateForm('movement_type', $event)"
+              >
+                <option value="manual_expense">Gasto manual</option>
+                <option value="manual_income">Ingreso manual</option>
+                <option value="payroll">Nómina</option>
+                <option value="social_security">Seguridad social</option>
+                <option value="tax">Impuesto</option>
+                <option value="freelance_fee">Colaborador</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="mb-1 block text-sm font-medium">Tercero</label>
+              <input
+                class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
+                type="text"
+                [ngModel]="form().third_party_name"
+                (ngModelChange)="updateForm('third_party_name', $event)"
+                placeholder="Ej. Hacienda"
+              />
+            </div>
+
+            <div>
+              <label class="mb-1 block text-sm font-medium">NIF/CIF tercero</label>
+              <input
+                class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
+                type="text"
+                [ngModel]="form().third_party_tax_id"
+                (ngModelChange)="updateForm('third_party_tax_id', $event || null)"
+                placeholder="Opcional"
+              />
+            </div>
+
+            <div>
+              <label class="mb-1 block text-sm font-medium">Concepto</label>
+              <input
+                class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
+                type="text"
+                [ngModel]="form().concept"
+                (ngModelChange)="updateForm('concept', $event)"
+                placeholder="Ej. Cuota autónomos marzo"
+              />
+            </div>
+
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label class="mb-1 block text-sm font-medium">Categoría</label>
+                <input
+                  class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
+                  type="text"
+                  [ngModel]="form().category"
+                  (ngModelChange)="updateForm('category', $event || null)"
+                  placeholder="Opcional"
+                />
+              </div>
+
+              <div>
+                <label class="mb-1 block text-sm font-medium">Subcategoría</label>
+                <input
+                  class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
+                  type="text"
+                  [ngModel]="form().subcategory"
+                  (ngModelChange)="updateForm('subcategory', $event || null)"
+                  placeholder="Opcional"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label class="mb-1 block text-sm font-medium">Área negocio</label>
+              <input
+                class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
+                type="text"
+                [ngModel]="form().business_area"
+                (ngModelChange)="updateForm('business_area', $event || null)"
+                placeholder="Ej. fiscalidad"
+              />
+            </div>
+
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div>
+                <label class="mb-1 block text-sm font-medium">Base</label>
+                <input
+                  class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
+                  type="number"
+                  step="0.01"
+                  [ngModel]="form().net_amount"
+                  (ngModelChange)="updateForm('net_amount', $event === '' ? null : +$event)"
+                />
+              </div>
+
+              <div>
+                <label class="mb-1 block text-sm font-medium">Impuestos</label>
+                <input
+                  class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
+                  type="number"
+                  step="0.01"
+                  [ngModel]="form().tax_amount"
+                  (ngModelChange)="updateForm('tax_amount', $event === '' ? 0 : +$event)"
+                />
+              </div>
+
+              <div>
+                <label class="mb-1 block text-sm font-medium">Total</label>
+                <input
+                  class="w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
+                  type="number"
+                  step="0.01"
+                  [ngModel]="form().total_amount"
+                  (ngModelChange)="updateForm('total_amount', +$event)"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label class="mb-1 block text-sm font-medium">Notas</label>
+              <textarea
+                class="min-h-[80px] w-full rounded-2xl border border-[var(--border-color)] bg-white px-3 py-2 text-sm"
+                [ngModel]="form().notes"
+                (ngModelChange)="updateForm('notes', $event || null)"
+                placeholder="Observaciones internas"
+              ></textarea>
+            </div>
+
+            <div class="flex items-center gap-2 rounded-2xl bg-[var(--bg-gray-color)] px-3 py-3">
+              <input
+                id="needsReview"
+                type="checkbox"
+                [ngModel]="form().needs_review"
+                (ngModelChange)="updateForm('needs_review', !!$event)"
+              />
+              <label for="needsReview" class="text-sm">Marcar para revisión</label>
+            </div>
+
+            <button
+              class="rounded-2xl bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              [disabled]="saving()"
+              (click)="submit()"
+            >
+              {{ saving() ? 'Guardando...' : 'Crear movimiento' }}
+            </button>
+          </div>
+        </div>
       </div>
 
-      @if (loading()) {
-        <div class="rounded-2xl bg-[var(--bg-gray-color)] px-4 py-6 text-sm text-[var(--dark-gray-color)]">
-          Cargando movimientos manuales...
-        </div>
-      } @else if (movements().length === 0) {
-        <div class="rounded-2xl bg-[var(--bg-gray-color)] px-4 py-6 text-sm text-[var(--dark-gray-color)]">
-          Aún no hay movimientos manuales registrados.
-        </div>
-      } @else {
-        <div class="overflow-x-auto">
-          <table class="min-w-full text-sm">
-            <thead class="bg-[var(--bg-gray-color)]">
-              <tr class="text-left">
-                <th class="px-4 py-3 font-medium">Fecha</th>
-                <th class="px-4 py-3 font-medium">Tipo</th>
-                <th class="px-4 py-3 font-medium">Tercero</th>
-                <th class="px-4 py-3 font-medium">Concepto</th>
-                <th class="px-4 py-3 font-medium">Categoría</th>
-                <th class="px-4 py-3 font-medium text-right">Total</th>
-              </tr>
-            </thead>
+      <!-- Tabla de movimientos manuales -->
+      <div class="xl:col-span-3">
+        <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-5 shadow-sm">
+          <div class="mb-5">
+            <h2 class="text-lg font-semibold">Últimos movimientos sin factura</h2>
+            <p class="text-sm text-[var(--dark-gray-color)]">Movimientos creados manualmente.</p>
+          </div>
 
-            <tbody>
-              @for (movement of movements(); track movement.id) {
-                <tr class="border-t border-[var(--border-color)]">
-                  <td class="px-4 py-3">{{ movement.movement_date || '—' }}</td>
-                  <td class="px-4 py-3">{{ movementTypeLabel(movement.source_reference || '') }}</td>
-                  <td class="px-4 py-3">{{ movement.third_party_name || '—' }}</td>
-                  <td class="px-4 py-3">{{ movement.concept || '—' }}</td>
-                  <td class="px-4 py-3">{{ movement.category || '—' }}</td>
-                  <td class="px-4 py-3 text-right font-medium">
-                    {{ toNumber(movement.total_amount) | number:'1.2-2' }} €
+          @if (loading()) {
+            <div class="rounded-2xl bg-[var(--bg-gray-color)] px-4 py-6 text-sm text-[var(--dark-gray-color)]">
+              Cargando movimientos manuales...
+            </div>
+          } @else if (movements().length === 0) {
+            <div class="rounded-2xl bg-[var(--bg-gray-color)] px-4 py-6 text-sm text-[var(--dark-gray-color)]">
+              Aún no hay movimientos manuales registrados.
+            </div>
+          } @else {
+            <div class="overflow-x-auto">
+              <table class="min-w-full text-sm">
+                <thead class="bg-[var(--bg-gray-color)]">
+                  <tr class="text-left">
+                    <th class="px-4 py-3 font-medium">Fecha</th>
+                    <th class="px-4 py-3 font-medium">Tipo</th>
+                    <th class="px-4 py-3 font-medium">Tercero</th>
+                    <th class="px-4 py-3 font-medium">Concepto</th>
+                    <th class="px-4 py-3 font-medium">Categoría</th>
+                    <th class="px-4 py-3 font-medium text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (movement of movements(); track movement.id) {
+                    <tr class="border-t border-[var(--border-color)]">
+                      <td class="px-4 py-3">{{ movement.movement_date || '—' }}</td>
+                      <td class="px-4 py-3">{{ movementTypeLabel(movement.source_reference || '') }}</td>
+                      <td class="px-4 py-3">{{ movement.third_party_name || '—' }}</td>
+                      <td class="px-4 py-3">{{ movement.concept || '—' }}</td>
+                      <td class="px-4 py-3">{{ movement.category || '—' }}</td>
+                      <td class="px-4 py-3 text-right font-medium">
+                        {{ toNumber(movement.total_amount) | number:'1.2-2' }} €
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ===== TAB: IMPORTAR EXCEL ===== -->
+  @if (activeTab() === 'import') {
+    <div class="space-y-5">
+
+      <!-- Zona de carga -->
+      <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-6 shadow-sm">
+        <h2 class="mb-1 text-lg font-semibold">Importar desde Excel</h2>
+        <p class="mb-5 text-sm text-[var(--dark-gray-color)]">
+          Sube un archivo .xlsx con tus registros. Puede contener compras, gastos o ingresos sin factura.
+          Las filas duplicadas se omiten automáticamente.
+        </p>
+
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <label
+            class="cursor-pointer rounded-xl border-2 border-dashed border-[var(--border-color)] px-6 py-4 text-sm text-[var(--dark-gray-color)] hover:border-blue-400 transition-colors"
+          >
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              class="hidden"
+              (change)="onFileSelected($event)"
+            />
+            @if (selectedFile()) {
+              <span class="font-medium text-[var(--text-color)]">{{ selectedFile()!.name }}</span>
+            } @else {
+              <span>Seleccionar archivo Excel (.xlsx)</span>
+            }
+          </label>
+
+          <button
+            [disabled]="!selectedFile() || importing()"
+            (click)="importFile()"
+            class="rounded-xl bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+          >
+            {{ importing() ? 'Importando...' : 'Importar' }}
+          </button>
+        </div>
+
+        @if (importResult()) {
+          <div class="mt-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-gray-color)] p-4 text-sm">
+            <p class="mb-1 font-medium">Resultado de importación</p>
+            <ul class="space-y-0.5 text-[var(--dark-gray-color)]">
+              <li>Filas detectadas: <strong>{{ importResult()!.rows_detected }}</strong></li>
+              <li>Importadas: <strong class="text-emerald-600">{{ importResult()!.rows_imported }}</strong></li>
+              <li>Omitidas (duplicadas): <strong class="text-yellow-600">{{ importResult()!.rows_skipped }}</strong></li>
+            </ul>
+          </div>
+        }
+      </div>
+
+      <!-- Tabla de registros importados -->
+      <div class="rounded-3xl border border-[var(--border-color)] bg-[var(--bright-bg-color)] p-6 shadow-sm">
+        <div class="mb-4 flex items-center justify-between">
+          <h2 class="text-lg font-semibold">Registros importados</h2>
+          <span class="text-xs text-[var(--dark-gray-color)]">{{ purchases().length }} registros</span>
+        </div>
+
+        @if (loadingPurchases()) {
+          <p class="text-sm text-[var(--dark-gray-color)]">Cargando...</p>
+        } @else if (!purchases().length) {
+          <p class="text-sm text-[var(--dark-gray-color)]">No hay registros importados. Sube un Excel para empezar.</p>
+        } @else {
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-[var(--border-color)] text-left text-xs font-medium uppercase text-[var(--dark-gray-color)]">
+                  <th class="pb-3 pr-4">Proveedor / Tercero</th>
+                  <th class="pb-3 pr-4">Fecha</th>
+                  <th class="pb-3 pr-4">Categoría</th>
+                  <th class="pb-3 pr-4 text-right">Base (€)</th>
+                  <th class="pb-3 pr-4 text-right">IVA (€)</th>
+                  <th class="pb-3 text-right">Total (€)</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (p of purchases(); track p.id) {
+                  <tr class="border-b border-[var(--border-color)] last:border-0 hover:bg-[var(--muted-hover-color)]">
+                    <td class="py-3 pr-4 font-medium">{{ p.provider_name }}</td>
+                    <td class="py-3 pr-4 text-[var(--dark-gray-color)]">
+                      {{ (p.issue_date || p.order_date) | date:'dd/MM/yyyy' }}
+                    </td>
+                    <td class="py-3 pr-4 text-[var(--dark-gray-color)]">{{ p.category || '—' }}</td>
+                    <td class="py-3 pr-4 text-right tabular-nums">{{ p.net_amount | number:'1.2-2' }}</td>
+                    <td class="py-3 pr-4 text-right tabular-nums">{{ p.tax_amount | number:'1.2-2' }}</td>
+                    <td class="py-3 text-right tabular-nums font-semibold">{{ p.total_amount | number:'1.2-2' }}</td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot>
+                <tr class="border-t-2 border-[var(--border-color)]">
+                  <td colspan="5" class="pt-3 pr-4 text-right text-xs font-medium uppercase text-[var(--dark-gray-color)]">Total</td>
+                  <td class="pt-3 text-right tabular-nums font-bold">
+                    {{ purchasesTotalAmount() | number:'1.2-2' }} €
                   </td>
                 </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      }
+              </tfoot>
+            </table>
+          </div>
+
+          @if (purchases().length >= purchasesLimit) {
+            <div class="mt-4 flex justify-center">
+              <button
+                (click)="loadMorePurchases()"
+                [disabled]="loadingMorePurchases()"
+                class="rounded-xl border border-[var(--border-color)] px-5 py-2 text-sm hover:bg-[var(--muted-hover-color)] disabled:opacity-60"
+              >
+                {{ loadingMorePurchases() ? 'Cargando...' : 'Cargar más' }}
+              </button>
+            </div>
+          }
+        }
+      </div>
+
     </div>
-  </div>
+  }
+
 </div>

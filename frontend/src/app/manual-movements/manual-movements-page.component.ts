@@ -1,18 +1,27 @@
-import { CommonModule, DecimalPipe } from '@angular/common';
+import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
 import { FinancialMovementService } from '../core/services/financial-movement.service';
 import { FinancialMovement } from '../core/interfaces/financial-movement.interface';
 import { ManualMovementCreateRequest } from '../core/interfaces/manual-movement.interface';
+import { PurchaseEntry, PurchaseImportResult, PurchasesService } from '../core/services/purchases.service';
+import { ToastService } from '../core/services/toast.service';
+
+export type MovimientosTab = 'manual' | 'import';
 
 @Component({
   selector: 'app-manual-movements-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, DecimalPipe],
+  imports: [CommonModule, FormsModule, DatePipe, DecimalPipe],
   templateUrl: './manual-movements-page.component.html',
 })
 export class ManualMovementsPageComponent {
   private readonly financialMovementService = inject(FinancialMovementService);
+  private readonly purchasesService = inject(PurchasesService);
+  private readonly toast = inject(ToastService);
+
+  readonly activeTab = signal<MovimientosTab>('manual');
 
   readonly loading = signal(false);
   readonly saving = signal(false);
@@ -20,6 +29,16 @@ export class ManualMovementsPageComponent {
   readonly success = signal<string | null>(null);
 
   readonly movements = signal<FinancialMovement[]>([]);
+
+  // — Pestaña Importar Excel —
+  readonly purchases = signal<PurchaseEntry[]>([]);
+  readonly loadingPurchases = signal(false);
+  readonly loadingMorePurchases = signal(false);
+  readonly importing = signal(false);
+  readonly selectedFile = signal<File | null>(null);
+  readonly importResult = signal<PurchaseImportResult | null>(null);
+  private purchasesSkip = 0;
+  readonly purchasesLimit = 50;
 
   readonly form = signal<ManualMovementCreateRequest>({
     movement_date: new Date().toISOString().slice(0, 10),
@@ -41,6 +60,11 @@ export class ManualMovementsPageComponent {
 
   constructor() {
     this.loadManualMovements();
+    this.loadPurchases();
+  }
+
+  setTab(tab: MovimientosTab): void {
+    this.activeTab.set(tab);
   }
 
   loadManualMovements(): void {
@@ -104,6 +128,59 @@ export class ManualMovementsPageComponent {
         this.saving.set(false);
       },
     });
+  }
+
+  // — Métodos de importación Excel —
+
+  loadPurchases(): void {
+    this.loadingPurchases.set(true);
+    this.purchasesSkip = 0;
+    this.purchasesService.list(0, this.purchasesLimit).pipe(
+      finalize(() => this.loadingPurchases.set(false))
+    ).subscribe({
+      next: (list) => { this.purchases.set(list); this.purchasesSkip = list.length; },
+      error: () => this.toast.show('Error al cargar los registros importados.', 'error'),
+    });
+  }
+
+  loadMorePurchases(): void {
+    this.loadingMorePurchases.set(true);
+    this.purchasesService.list(this.purchasesSkip, this.purchasesLimit).pipe(
+      finalize(() => this.loadingMorePurchases.set(false))
+    ).subscribe({
+      next: (list) => {
+        this.purchases.update((prev) => [...prev, ...list]);
+        this.purchasesSkip += list.length;
+      },
+      error: () => this.toast.show('Error al cargar más registros.', 'error'),
+    });
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.selectedFile.set(input.files?.[0] ?? null);
+    this.importResult.set(null);
+  }
+
+  importFile(): void {
+    const file = this.selectedFile();
+    if (!file) return;
+    this.importing.set(true);
+    this.purchasesService.importExcel(file).pipe(
+      finalize(() => this.importing.set(false))
+    ).subscribe({
+      next: (result) => {
+        this.importResult.set(result);
+        this.selectedFile.set(null);
+        this.toast.show(`Importación completada: ${result.rows_imported} registros añadidos.`, 'success');
+        this.loadPurchases();
+      },
+      error: (err) => this.toast.show(err?.error?.detail || 'Error al importar el archivo.', 'error'),
+    });
+  }
+
+  purchasesTotalAmount(): number {
+    return this.purchases().reduce((sum, p) => sum + Number(p.total_amount), 0);
   }
 
   toNumber(value: string | number | null | undefined): number {

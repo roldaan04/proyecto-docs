@@ -16,7 +16,6 @@ import { adminGuard } from './core/guards/admin.guard';
 import { UserManagementComponent } from './features/admin/pages/user-management/user-management.component';
 import { MembersPageComponent } from './features/members/members-page.component';
 import { AcceptInvitationPageComponent } from './features/members/accept-invitation-page.component';
-import { PurchasesPageComponent } from './purchases/purchases-page.component';
 
 
 export const routes: Routes = [
@@ -64,8 +63,8 @@ export const routes: Routes = [
       },
       {
         path: 'purchases',
-        component: PurchasesPageComponent,
-        title: 'Compras | Control Admin',
+        redirectTo: 'manual-movements',
+        pathMatch: 'full',
       },
       {
         path: 'manual-movements',
